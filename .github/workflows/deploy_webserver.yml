@@ -1,0 +1,49 @@
+name: Build, test, and deploy webserver
+on:
+  push:
+    branches:
+      - main
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+
+jobs:
+  build-and-deploy:
+    name: Build, test and deploy to GitHub Container registry
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+          architecture: x64
+
+      - name: Install dependencies
+        run: |-
+          pipx install poetry==1.1.12
+          pipx install nox==2022.1.7
+          pipx inject nox nox-poetry
+
+      - name: Build image and test with nox
+        run: |-
+          nox
+        env:
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+
+      - name: Log in to registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Tag and publish docker image to Github Container registry
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |-
+          docker tag ghcr.io/$PROJECT_ID/event-service:test ghcr.io/$PROJECT_ID/event-service:latest
+          docker rmi ghcr.io/$PROJECT_ID/event-service:test
+          docker push ghcr.io/$PROJECT_ID/event-service
