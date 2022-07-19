@@ -47,7 +47,6 @@ async def photo() -> dict:
     """An photo object for testing."""
     return {
         "name": "Oslo Skagen sprint",
-        "competition_format": "Interval Start",
         "date_of_photo": "2021-08-31",
         "time_of_photo": "09:00:00",
         "organiser": "Lyn Ski",
@@ -75,14 +74,6 @@ async def token(http_service: Any) -> str:
     return body["token"]
 
 
-@pytest.fixture(scope="module")
-async def competition_format_interval_start() -> dict:
-    """An competition_format object for testing."""
-    with open("tests/files/competition_format.json", "r") as file:
-        competition_format = load(file)
-    return competition_format
-
-
 @pytest.mark.contract
 @pytest.mark.asyncio
 async def test_create_photo(
@@ -90,7 +81,6 @@ async def test_create_photo(
     token: MockFixture,
     clear_db: AsyncGenerator,
     photo: dict,
-    competition_format_interval_start: dict,
 ) -> None:
     """Should return Created, location header and no body."""
     async with ClientSession() as session:
@@ -98,13 +88,6 @@ async def test_create_photo(
             hdrs.CONTENT_TYPE: "application/json",
             hdrs.AUTHORIZATION: f"Bearer {token}",
         }
-        # We have to create a competition_format:
-        url = f"{http_service}/competition-formats"
-        request_body = competition_format_interval_start
-        async with session.post(url, headers=headers, json=request_body) as response:
-            status = response.status
-            assert status == 201
-
         url = f"{http_service}/photos"
         request_body = photo
 
@@ -153,7 +136,6 @@ async def test_get_photo_by_id(
     assert type(photo) is dict
     assert body["id"] == id
     assert body["name"] == photo["name"]
-    assert body["competition_format"] == photo["competition_format"]
     assert body["date_of_photo"] == photo["date_of_photo"]
     assert body["time_of_photo"] == photo["time_of_photo"]
     assert body["organiser"] == photo["organiser"]
@@ -189,7 +171,6 @@ async def test_update_photo(http_service: Any, token: MockFixture, photo: dict) 
             assert response.status == 200
             updated_photo = await response.json()
             assert updated_photo["name"] == new_name
-            assert updated_photo["competition_format"] == photo["competition_format"]
             assert updated_photo["date_of_photo"] == photo["date_of_photo"]
             assert updated_photo["time_of_photo"] == photo["time_of_photo"]
             assert updated_photo["organiser"] == photo["organiser"]
