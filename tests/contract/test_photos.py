@@ -1,7 +1,6 @@
 """Contract test cases for ping."""
 import asyncio
 from copy import deepcopy
-from json import load
 import logging
 import os
 from typing import Any, AsyncGenerator
