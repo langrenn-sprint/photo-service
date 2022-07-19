@@ -176,7 +176,6 @@ async def test_update_photo(http_service: Any, token: MockFixture, photo: dict) 
             updated_photo = await response.json()
             assert updated_photo["name"] == new_name
             assert updated_photo["creation_time"] == photo["creation_time"]
-            assert updated_photo["time_of_photo"] == photo["time_of_photo"]
             assert updated_photo["information"] == photo["information"]
 
 
