@@ -45,12 +45,20 @@ async def clear_db(http_service: Any, token: MockFixture) -> AsyncGenerator:
 async def photo() -> dict:
     """An photo object for testing."""
     return {
-        "name": "Oslo Skagen sprint",
-        "date_of_photo": "2021-08-31",
-        "time_of_photo": "09:00:00",
-        "organiser": "Lyn Ski",
-        "webpage": "https://example.com",
-        "information": "Testarr for å teste den nye løysinga.",
+        "name": "IMG_6291.JPG",
+        "event_id": "1e95458c-e000-4d8b-beda-f860c77fd758",
+        "creation_time": "2022-03-05T06:41:52",
+        "information": "Test photo for sprint",
+        "race_id": "1e95458c-e000-4d8b-beda-f860c77fd758",
+        "raceclass": "K-Jr",
+        "biblist": [2, 4],
+        "clublist": ["Kjelsås", "Lyn"],
+        "g_id": "APU9jkgGt20Pq1SHqEjC1TiOuOliKbH5P64k_roOwf_sXKuY57KFCCQ2g9UbOwRUg6OSVG4C9GZK",
+        "g_product_url": "https://photos.google.com/G4C9GZK",
+        "g_base_url": "https://lh3.googleusercontent.com/f_AEeh",
+        "ai_text": ["Kjelsas", "Lyn", "Sprint"],
+        "ai_numbers": [2, 4],
+        "ai_information": "",
     }
 
 
@@ -135,10 +143,7 @@ async def test_get_photo_by_id(
     assert type(photo) is dict
     assert body["id"] == id
     assert body["name"] == photo["name"]
-    assert body["date_of_photo"] == photo["date_of_photo"]
-    assert body["time_of_photo"] == photo["time_of_photo"]
-    assert body["organiser"] == photo["organiser"]
-    assert body["webpage"] == photo["webpage"]
+    assert body["creation_time"] == photo["creation_time"]
     assert body["information"] == photo["information"]
 
 
@@ -170,10 +175,8 @@ async def test_update_photo(http_service: Any, token: MockFixture, photo: dict) 
             assert response.status == 200
             updated_photo = await response.json()
             assert updated_photo["name"] == new_name
-            assert updated_photo["date_of_photo"] == photo["date_of_photo"]
+            assert updated_photo["creation_time"] == photo["creation_time"]
             assert updated_photo["time_of_photo"] == photo["time_of_photo"]
-            assert updated_photo["organiser"] == photo["organiser"]
-            assert updated_photo["webpage"] == photo["webpage"]
             assert updated_photo["information"] == photo["information"]
 
 

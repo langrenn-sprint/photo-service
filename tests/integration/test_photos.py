@@ -1,7 +1,6 @@
 """Integration test cases for the photos route."""
 from copy import deepcopy
 import os
-from typing import Dict
 
 from aiohttp import hdrs
 from aiohttp.test_utils import TestClient as _TestClient
@@ -31,15 +30,23 @@ def token_unsufficient_role() -> str:
 
 
 @pytest.fixture
-async def photo() -> Dict[str, str]:
+async def photo() -> dict:
     """An photo object for testing."""
     return {
-        "name": "Oslo Skagen sprint",
-        "date_of_photo": "2021-08-31",
-        "time_of_photo": "09:00:00",
-        "organiser": "Lyn Ski",
-        "webpage": "https://example.com",
-        "information": "Testarr for å teste den nye løysinga.",
+        "name": "IMG_6291.JPG",
+        "event_id": "1e95458c-e000-4d8b-beda-f860c77fd758",
+        "creation_time": "2022-03-05T06:41:52",
+        "information": "Test photo for sprint",
+        "race_id": "1e95458c-e000-4d8b-beda-f860c77fd758",
+        "raceclass": "K-Jr",
+        "biblist": [2, 4],
+        "clublist": ["Kjelsås", "Lyn"],
+        "g_id": "APU9jkgGt20Pq1SHqEjC1TiOuOliKbH5P64k_roOwf_sXKuY57KFCCQ2g9UbOwRUg6OSVG4C9GZK",
+        "g_product_url": "https://photos.google.com/G4C9GZK",
+        "g_base_url": "https://lh3.googleusercontent.com/f_AEeh",
+        "ai_text": ["Kjelsas", "Lyn", "Sprint"],
+        "ai_numbers": [2, 4],
+        "ai_information": "",
     }
 
 
@@ -77,7 +84,7 @@ async def test_create_photo(
 
 @pytest.mark.integration
 async def test_get_photo_by_id(
-    client: _TestClient, mocker: MockFixture, token: MockFixture, photo: Dict[str, str]
+    client: _TestClient, mocker: MockFixture, token: MockFixture, photo: dict
 ) -> None:
     """Should return OK, and a body containing one photo."""
     ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
@@ -96,9 +103,7 @@ async def test_get_photo_by_id(
         assert type(photo) is dict
         assert body["id"] == ID
         assert body["name"] == photo["name"]
-        assert body["date_of_photo"] == photo["date_of_photo"]
-        assert body["organiser"] == photo["organiser"]
-        assert body["webpage"] == photo["webpage"]
+        assert body["creation_time"] == photo["creation_time"]
         assert body["information"] == photo["information"]
 
 
@@ -317,124 +322,6 @@ async def test_update_photo_by_id_different_id_in_body(
 
         resp = await client.put(f"/photos/{ID}", headers=headers, json=request_body)
         assert resp.status == 422
-
-
-@pytest.mark.integration
-async def test_create_photo_invalid_date(
-    client: _TestClient, mocker: MockFixture, token: MockFixture, photo: dict
-) -> None:
-    """Should return 400 Bad request."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
-    mocker.patch(
-        "photo_service.services.photos_service.create_id",
-        return_value=ID,
-    )
-    mocker.patch(
-        "photo_service.adapters.photos_adapter.PhotosAdapter.create_photo",
-        return_value=ID,
-    )
-
-    photo_invalid_date = deepcopy(photo)
-    photo_invalid_date["date_of_photo"] = "9999-99-99"
-
-    headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
-
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
-        resp = await client.post("/photos", headers=headers, json=photo_invalid_date)
-        assert resp.status == 400
-
-
-@pytest.mark.integration
-async def test_create_photo_invalid_time(
-    client: _TestClient, mocker: MockFixture, token: MockFixture, photo: dict
-) -> None:
-    """Should return 400 Bad request."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
-    mocker.patch(
-        "photo_service.services.photos_service.create_id",
-        return_value=ID,
-    )
-    mocker.patch(
-        "photo_service.adapters.photos_adapter.PhotosAdapter.create_photo",
-        return_value=ID,
-    )
-
-    photo_invalid_time = deepcopy(photo)
-    photo_invalid_time["time_of_photo"] = "99:99:99"
-
-    headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
-
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
-        resp = await client.post("/photos", headers=headers, json=photo_invalid_time)
-        assert resp.status == 400
-
-
-@pytest.mark.integration
-async def test_update_photo_invalid_date(
-    client: _TestClient, mocker: MockFixture, token: MockFixture, photo: dict
-) -> None:
-    """Should return 400 Bad request."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
-    mocker.patch(
-        "photo_service.adapters.photos_adapter.PhotosAdapter.get_photo_by_id",
-        return_value={"id": ID} | photo,  # type: ignore
-    )
-    mocker.patch(
-        "photo_service.adapters.photos_adapter.PhotosAdapter.update_photo",
-        return_value={"id": ID} | photo,  # type: ignore
-    )
-
-    headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
-    request_body = deepcopy(photo)
-    request_body["id"] = ID
-    request_body["date_of_photo"] = "9999-99-99"
-
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
-
-        resp = await client.put(f"/photos/{ID}", headers=headers, json=request_body)
-        assert resp.status == 400
-
-
-@pytest.mark.integration
-async def test_update_photo_invalid_time(
-    client: _TestClient, mocker: MockFixture, token: MockFixture, photo: dict
-) -> None:
-    """Should return 400 Bad request."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
-    mocker.patch(
-        "photo_service.adapters.photos_adapter.PhotosAdapter.get_photo_by_id",
-        return_value={"id": ID} | photo,  # type: ignore
-    )
-    mocker.patch(
-        "photo_service.adapters.photos_adapter.PhotosAdapter.update_photo",
-        return_value={"id": ID} | photo,  # type: ignore
-    )
-
-    headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
-    request_body = deepcopy(photo)
-    request_body["id"] = ID
-    request_body["time_of_photo"] = "99:99:99"
-
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
-
-        resp = await client.put(f"/photos/{ID}", headers=headers, json=request_body)
-        assert resp.status == 400
 
 
 # Unauthorized cases:

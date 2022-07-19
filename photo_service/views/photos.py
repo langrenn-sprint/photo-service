@@ -18,7 +18,6 @@ from photo_service.adapters import UsersAdapter
 from photo_service.models import Photo
 from photo_service.services import (
     IllegalValueException,
-    InvalidDateFormatException,
     PhotoNotFoundException,
     PhotosService,
 )
@@ -67,8 +66,6 @@ class PhotosView(View):
             photo_id = await PhotosService.create_photo(db, photo)
         except IllegalValueException as e:
             raise HTTPUnprocessableEntity(reason=str(e)) from e
-        except (InvalidDateFormatException) as e:
-            raise HTTPBadRequest(reason=str(e)) from e
         if photo_id:
             logging.debug(f"inserted document with photo_id {photo_id}")
             headers = MultiDict([(hdrs.LOCATION, f"{BASE_URL}/photos/{photo_id}")])
@@ -122,8 +119,6 @@ class PhotoView(View):
             raise HTTPUnprocessableEntity(reason=str(e)) from e
         except PhotoNotFoundException as e:
             raise HTTPNotFound(reason=str(e)) from e
-        except (InvalidDateFormatException) as e:
-            raise HTTPBadRequest(reason=str(e)) from e
         return Response(status=204)
 
     async def delete(self) -> Response:

@@ -1,7 +1,7 @@
 """Photo data class module."""
 from dataclasses import dataclass, field
-from datetime import date, time
-from typing import Optional
+from datetime import time
+from typing import List, Optional
 
 from dataclasses_json import DataClassJsonMixin
 
@@ -11,9 +11,17 @@ class Photo(DataClassJsonMixin):
     """Data class with details about a photo."""
 
     name: str
-    date_of_photo: Optional[date] = field(default=None)
-    time_of_photo: Optional[time] = field(default=None)
-    organiser: Optional[str] = field(default=None)
-    webpage: Optional[str] = field(default=None)
+    event_id: Optional[str] = field(default=None)
+    creation_time: Optional[time] = field(default=None)
     information: Optional[str] = field(default=None)
     id: Optional[str] = field(default=None)
+    race_id: Optional[str] = field(default=None)
+    raceclass: Optional[str] = field(default=None)
+    biblist: Optional[List[int]] = field(default=None)
+    clublist: Optional[List[str]] = field(default=None)
+    g_id: Optional[str] = field(default=None)
+    g_product_url: Optional[str] = field(default=None)
+    g_base_url: Optional[str] = field(default=None)
+    ai_numbers: Optional[List[int]] = field(default=None)
+    ai_text: Optional[List[str]] = field(default=None)
+    ai_information: Optional[List[str]] = field(default=None)

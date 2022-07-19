@@ -1,12 +1,11 @@
 """Module for photos service."""
-from datetime import date, time
 import logging
 from typing import Any, List, Optional
 import uuid
 
 from photo_service.adapters import PhotosAdapter
 from photo_service.models import Photo
-from .exceptions import IllegalValueException, InvalidDateFormatException
+from .exceptions import IllegalValueException
 
 
 def create_id() -> str:  # pragma: no cover
@@ -36,10 +35,8 @@ class PhotosService:
         _s = sorted(
             photos,
             key=lambda k: (
-                k.date_of_photo is not None,
-                k.date_of_photo,
-                k.time_of_photo is not None,
-                k.time_of_photo,
+                k.creation_time is not None,
+                k.creation_time,
             ),
             reverse=True,
         )
@@ -65,8 +62,6 @@ class PhotosService:
         # create id
         id = create_id()
         photo.id = id
-        # Validat:
-        await validate_photo(db, photo)
         # insert new photo
         new_photo = photo.to_dict()
         result = await PhotosAdapter.create_photo(db, new_photo)
@@ -87,8 +82,6 @@ class PhotosService:
     @classmethod
     async def update_photo(cls: Any, db: Any, id: str, photo: Photo) -> Optional[str]:
         """Get photo function."""
-        # validate:
-        await validate_photo(db, photo)
         # get old document
         old_photo = await PhotosAdapter.get_photo_by_id(db, id)
         # update the photo if found:
@@ -110,25 +103,3 @@ class PhotosService:
             result = await PhotosAdapter.delete_photo(db, id)
             return result
         raise PhotoNotFoundException(f"Photo with id {id} not found") from None
-
-
-#   Validation:
-async def validate_photo(db: Any, photo: Photo) -> None:
-    """Validate the photo."""
-    # Validate date_of_photo if set:
-    if photo.date_of_photo:
-        try:
-            date.fromisoformat(photo.date_of_photo)  # type: ignore
-        except ValueError as e:
-            raise InvalidDateFormatException(
-                'Time "{time_str}" has invalid format.'
-            ) from e
-
-    # Validate time_of_photo if set:
-    if photo.time_of_photo:
-        try:
-            time.fromisoformat(photo.time_of_photo)  # type: ignore
-        except ValueError as e:
-            raise InvalidDateFormatException(
-                'Time "{time_str}" has invalid format.'
-            ) from e
