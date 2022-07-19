@@ -44,6 +44,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |-
-          docker tag ghcr.io/$PROJECT_ID/event-service:test ghcr.io/$PROJECT_ID/event-service:latest
-          docker rmi ghcr.io/$PROJECT_ID/event-service:test
-          docker push ghcr.io/$PROJECT_ID/event-service
+          docker tag ghcr.io/$PROJECT_ID/photo-service:test ghcr.io/$PROJECT_ID/photo-service:latest
+          docker rmi ghcr.io/$PROJECT_ID/photo-service:test
+          docker push ghcr.io/$PROJECT_ID/photo-service
