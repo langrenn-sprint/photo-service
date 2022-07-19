@@ -1,8 +1,8 @@
 version: '3'
 services:
-  event-service:
+  photo-service:
     build: .
-    image: ghcr.io/langrenn-sprint/event-service:test
+    image: ghcr.io/langrenn-sprint/photo-service:test
     ports:
       - 8080:8080
     environment:

@@ -1,6 +1,6 @@
-# event-service
+# photo-service
 
-Backend service to create events, create raceclasses and assign bibs to contestants.
+Backend service to create photos, create raceclasses and assign bibs to contestants.
 
 Supported [competition formats](https://assets.fis-ski.com/image/upload/v1624284540/fis-prod/assets/ICR_CrossCountry_2022_clean.pdf):
 
@@ -32,18 +32,17 @@ In future versions:
 % curl -H "Content-Type: application/json" \
   -H "Authorization: Bearer $ACCESS" \
   -X POST \
-  --data @tests/files/event.json \
-  http://localhost:8080/events
-% curl -H "Authorization: Bearer $ACCESS"  http://localhost:8080/events
+  --data @tests/files/photo.json \
+  http://localhost:8080/photos
+% curl -H "Authorization: Bearer $ACCESS"  http://localhost:8080/photos
 % curl -H "Content-Type: multipart/form-data" \
   -H "Authorization: Bearer $ACCESS" \
   -X POST \
   -F "data=@tests/files/contestants_all.csv; type=text/csv" \
-  http://localhost:8080/events/<event-id/contestants
+  http://localhost:8080/photos/<event-id>
 % curl \
   -H "Authorization: Bearer $ACCESS" \
   -X GET \
-  http://localhost:8080/events/<event-id>/contestants
 ```
 
 Look to the [openAPI specification](./specification.yaml) for the details.
@@ -53,13 +52,13 @@ Look to the [openAPI specification](./specification.yaml) for the details.
 Start the server locally:
 
 ```Shell
-% poetry run adev runserver -p 8080 --aux-port 8089 event_service
+% poetry run adev runserver -p 8080 --aux-port 8089 photo_service
 ```
 
 ## Running the API in a wsgi-server (gunicorn)
 
 ```Shell
-% poetry run gunicorn event_service:create_app --bind localhost:8080 --worker-class aiohttp.GunicornWebWorker
+% poetry run gunicorn photo_service:create_app --bind localhost:8080 --worker-class aiohttp.GunicornWebWorker
 ```
 
 ## Running the wsgi-server in Docker
@@ -67,8 +66,8 @@ Start the server locally:
 To build and run the api in a Docker container:
 
 ```Shell
-% docker build -t ghcr.io/langrenn-sprint/event-service:latest .
-% docker run --env-file .env -p 8080:8080 -d ghcr.io/langrenn-sprint/event-service:latest
+% docker build -t ghcr.io/langrenn-sprint/photo-service:latest .
+% docker run --env-file .env -p 8080:8080 -d ghcr.io/langrenn-sprint/photo-service:latest
 ```
 
 The easier way would be with docker-compose:
@@ -90,7 +89,7 @@ To run linters, checkers and tests:
 To run specific test:
 
 ```Shell
-% nox -s integration_tests -- -k test_create_event_adapter_fails
+% nox -s integration_tests -- -k test_create_photo_adapter_fails
 ```
 
 To run tests with logging, do:
@@ -110,7 +109,7 @@ ADMIN_USERNAME=admin
 ADMIN_PASSWORD=password
 USERS_HOST_SERVER=localhost
 USERS_HOST_PORT=8086
-DB_USER=event-service
+DB_USER=photo-service
 DB_PASSWORD=password
 LOGGING_LEVEL=DEBUG
 ```

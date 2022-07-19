@@ -4,8 +4,8 @@ import sys
 import nox
 from nox_poetry import Session, session
 
-package = "event_service"
-locations = "event_service", "tests", "noxfile.py"
+package = "photo_service"
+locations = "photo_service", "tests", "noxfile.py"
 nox.options.envdir = ".cache"
 nox.options.reuse_existing_virtualenvs = True
 nox.options.stop_on_first_error = True
@@ -95,7 +95,7 @@ def contract_tests(session: Session) -> None:
             "USERS_HOST_SERVER": "localhost",
             "USERS_HOST_PORT": "8081",
             "JWT_EXP_DELTA_SECONDS": "60",
-            "DB_USER": "event-service",
+            "DB_USER": "photo-service",
             "DB_PASSWORD": "password",
             "LOGGING_LEVEL": "DEBUG",
         },
@@ -143,7 +143,7 @@ def mypy(session: Session) -> None:
     args = session.posargs or [
         "--install-types",
         "--non-interactive",
-        "event_service",
+        "photo_service",
         "tests",
     ]
     session.install(".")

@@ -5,12 +5,12 @@ classifiers = [
   "License :: OSI Approved :: Apache Software License",
   "Operating System :: OS Independent",
 ]
-description = "An API for admin of sporting events"
-homepage = "https://github.com/langrenn-sprint/event-service"
+description = "An API for admin of sporting photos"
+homepage = "https://github.com/langrenn-sprint/photo-service"
 license = "Apache-2.0"
-name = "event-service"
+name = "photo-service"
 readme = "README.md"
-repository = "https://github.com/langrenn-sprint/event-service"
+repository = "https://github.com/langrenn-sprint/photo-service"
 version = "0.1.0"
 
 [tool.poetry.dependencies]
@@ -60,12 +60,12 @@ requests = "^2.25.1"
 safety = "^1.9.0"
 
 [tool.coverage.paths]
-source = ["event_service", "*/site-packages"]
+source = ["photo_service", "*/site-packages"]
 
 [tool.coverage.run]
 branch = false
 omit = ["*gunicorn_config.py"]
-source = ["event_service"]
+source = ["photo_service"]
 
 [tool.coverage.report]
 fail_under = 100
