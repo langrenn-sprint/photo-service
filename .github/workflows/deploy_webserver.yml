@@ -3,8 +3,6 @@ on:
   push:
     branches:
       - main
-env:
-  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
 
 jobs:
   build-and-deploy:
@@ -44,6 +42,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |-
-          docker tag ghcr.io/$PROJECT_ID/photo-service:test ghcr.io/$PROJECT_ID/photo-service:latest
-          docker rmi ghcr.io/$PROJECT_ID/photo-service:test
-          docker push ghcr.io/$PROJECT_ID/photo-service
+          docker tag ghcr.io//langrenn-sprint/photo-service:test ghcr.io/langrenn-sprint/photo-service:latest
+          docker rmi ghcr.io/langrenn-sprint/photo-service:test
+          docker push ghcr.io/langrenn-sprint/photo-service
