@@ -1,25 +1,7 @@
 # photo-service
 
-Backend service to create photos, create raceclasses and assign bibs to contestants.
+Backend service to create photos, align with google albums.
 
-Supported [competition formats](https://assets.fis-ski.com/image/upload/v1624284540/fis-prod/assets/ICR_CrossCountry_2022_clean.pdf):
-
-in this version:
-
-- Interval Start competition,
-
-In next version:
-
-- Individual sprint competition without a qualification round.
-
-In future versions:
-
-- Mass start competition,
-- Skiathlon competition,
-- Pursuit,
-- Individual sprint competition with a qualification round,
-- Team sprint competition, and
-- Relay competitions.
 
 ## Usage example
 

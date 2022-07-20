@@ -1,0 +1,25 @@
+{
+  "mediaItems": [
+    {
+      "id": "SVG4C9GZK",
+      "productUrl": "https://photos.google.com/lr/album/4C9GZK",
+      "baseUrl": "https://lh3.googleusercontent.com/lr/AFz2e37IZC1V",
+      "mimeType": "image/jpeg",
+      "mediaMetadata": {
+        "creationTime": "2022-03-05T06:41:52Z",
+        "width": "4898",
+        "height": "3265",
+        "photo": {
+          "cameraMake": "Canon",
+          "cameraModel": "Canon EOS 7D",
+          "focalLength": 24,
+          "apertureFNumber": 4,
+          "isoEquivalent": 160,
+          "exposureTime": "0.001249999s"
+        }
+      },
+      "filename": "IMG_6291.JPG"
+    }
+  ],
+  "nextPageToken": "obbTJSYTFkRWRhZ25CQ3dfM2ZRZjF6bnZWTHNZ"
+}
