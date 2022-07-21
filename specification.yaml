@@ -33,6 +33,14 @@ paths:
         201:
           description: Created
     get:
+      parameters:
+        - name: gId
+          in: path
+          description: google photo id (FK)
+          required: false
+          schema:
+            type: string
+            format: uuid
       tags:
         - photo
       description: Get a list of photos

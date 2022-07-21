@@ -71,6 +71,15 @@ class PhotosService:
         return None
 
     @classmethod
+    async def get_photo_by_g_id(cls: Any, db: Any, g_id: str) -> Photo:
+        """Get photo function."""
+        photo = await PhotosAdapter.get_photo_by_g_id(db, g_id)
+        # return the document if found:
+        if photo:
+            return Photo.from_dict(photo)
+        raise PhotoNotFoundException(f"Photo with g_id {g_id} not found") from None
+
+    @classmethod
     async def get_photo_by_id(cls: Any, db: Any, id: str) -> Photo:
         """Get photo function."""
         photo = await PhotosAdapter.get_photo_by_id(db, id)

@@ -35,13 +35,16 @@ class PhotosView(View):
     async def get(self) -> Response:
         """Get route function."""
         db = self.request.app["db"]
-
-        photos = await PhotosService.get_all_photos(db)
-        list = []
-        for _e in photos:
-            list.append(_e.to_dict())
-
-        body = json.dumps(list, default=str, ensure_ascii=False)
+        if "gId" in self.request.rel_url.query:
+            g_id = self.request.rel_url.query["gId"]
+            photo = await PhotosService.get_photo_by_g_id(db, g_id)
+            body = photo.to_json()
+        else:
+            photos = await PhotosService.get_all_photos(db)
+            list = []
+            for _e in photos:
+                list.append(_e.to_dict())
+            body = json.dumps(list, default=str, ensure_ascii=False)
         return Response(status=200, body=body, content_type="application/json")
 
     async def post(self) -> Response:

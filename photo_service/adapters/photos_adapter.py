@@ -23,6 +23,14 @@ class PhotosAdapter(Adapter):
         return result
 
     @classmethod
+    async def get_photo_by_g_id(
+        cls: Any, db: Any, g_id: str
+    ) -> dict:  # pragma: no cover
+        """Get photo function."""
+        result = await db.photos_collection.find_one({"g_id": g_id})
+        return result
+
+    @classmethod
     async def get_photo_by_id(cls: Any, db: Any, id: str) -> dict:  # pragma: no cover
         """Get photo function."""
         result = await db.photos_collection.find_one({"id": id})
