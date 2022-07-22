@@ -56,9 +56,7 @@ async def photo() -> dict:
         "g_id": "APU9jkgGt20Pq1SHqEjC1TiOuOliKbH5P64k_roOwf_sXKuY57KFCCQ2g9UbOwRUg6OSVG4C9GZK",
         "g_product_url": "https://photos.google.com/G4C9GZK",
         "g_base_url": "https://lh3.googleusercontent.com/f_AEeh",
-        "ai_text": ["Kjelsas", "Lyn", "Sprint"],
-        "ai_numbers": [2, 4],
-        "ai_information": "",
+        "ai_information": {"persons": "3", "numbers": [5], "texts": ["LYN"]},
     }
 
 

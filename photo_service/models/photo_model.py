@@ -1,7 +1,7 @@
 """Photo data class module."""
 from dataclasses import dataclass, field
 from datetime import time
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from dataclasses_json import DataClassJsonMixin
 
@@ -22,6 +22,4 @@ class Photo(DataClassJsonMixin):
     g_id: Optional[str] = field(default=None)
     g_product_url: Optional[str] = field(default=None)
     g_base_url: Optional[str] = field(default=None)
-    ai_numbers: Optional[List[int]] = field(default=None)
-    ai_text: Optional[List[str]] = field(default=None)
-    ai_information: Optional[List[str]] = field(default=None)
+    ai_information: Optional[Dict] = field(default=None)
