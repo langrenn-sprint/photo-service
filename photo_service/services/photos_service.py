@@ -38,9 +38,17 @@ class PhotosService:
                 k.creation_time is not None,
                 k.creation_time,
             ),
-            reverse=True,
         )
         return _s
+
+    @classmethod
+    async def get_photos_by_raceclass(cls: Any, db: Any, raceclass: str) -> List[Photo]:
+        """Get all photos for one raceclass function."""
+        photos: List[Photo] = []
+        _photos = await PhotosAdapter.get_photos_by_raceclass(db, raceclass)
+        for e in _photos:
+            photos.append(Photo.from_dict(e))
+        return photos
 
     @classmethod
     async def create_photo(cls: Any, db: Any, photo: Photo) -> Optional[str]:
