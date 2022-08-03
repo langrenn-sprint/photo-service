@@ -41,6 +41,13 @@ paths:
           schema:
             type: string
             format: uuid
+        - name: raceclass
+          in: path
+          description: raceclass (FK)
+          required: false
+          schema:
+            type: string
+            format: uuid
       tags:
         - photo
       description: Get a list of photos

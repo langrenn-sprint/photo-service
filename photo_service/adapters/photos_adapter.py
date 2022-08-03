@@ -8,6 +8,12 @@ class PhotosAdapter(Adapter):
     """Class representing an adapter for photos."""
 
     @classmethod
+    async def create_photo(cls: Any, db: Any, photo: dict) -> str:  # pragma: no cover
+        """Create photo function."""
+        result = await db.photos_collection.insert_one(photo)
+        return result
+
+    @classmethod
     async def get_all_photos(cls: Any, db: Any) -> List:  # pragma: no cover
         """Get all photos function."""
         photos: List = []
@@ -15,12 +21,6 @@ class PhotosAdapter(Adapter):
         for photo in await cursor.to_list(None):
             photos.append(photo)
         return photos
-
-    @classmethod
-    async def create_photo(cls: Any, db: Any, photo: dict) -> str:  # pragma: no cover
-        """Create photo function."""
-        result = await db.photos_collection.insert_one(photo)
-        return result
 
     @classmethod
     async def get_photo_by_g_id(
@@ -35,6 +35,17 @@ class PhotosAdapter(Adapter):
         """Get photo function."""
         result = await db.photos_collection.find_one({"id": id})
         return result
+
+    @classmethod
+    async def get_photos_by_raceclass(
+        cls: Any, db: Any, raceclass: str
+    ) -> List:  # pragma: no cover
+        """Get all photos by raceclass function."""
+        photos: List = []
+        cursor = db.photos_collection.find({"raceclass": raceclass})
+        for photo in await cursor.to_list(None):
+            photos.append(photo)
+        return photos
 
     @classmethod
     async def update_photo(

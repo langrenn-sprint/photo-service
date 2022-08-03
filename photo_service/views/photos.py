@@ -39,6 +39,13 @@ class PhotosView(View):
             g_id = self.request.rel_url.query["gId"]
             photo = await PhotosService.get_photo_by_g_id(db, g_id)
             body = photo.to_json()
+        elif "raceclass" in self.request.rel_url.query:
+            raceclass = self.request.rel_url.query["raceclass"]
+            photos = await PhotosService.get_photos_by_raceclass(db, raceclass)
+            list = []
+            for _e in photos:
+                list.append(_e.to_dict())
+            body = json.dumps(list, default=str, ensure_ascii=False)
         else:
             photos = await PhotosService.get_all_photos(db)
             list = []
