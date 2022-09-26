@@ -8,6 +8,8 @@ from aiohttp_middlewares import cors_middleware, error_middleware
 import motor.motor_asyncio
 
 from .views import (
+    AlbumsView,
+    AlbumView,
     GooglePhotosView,
     PhotosView,
     PhotoView,
@@ -39,6 +41,8 @@ async def create_app() -> web.Application:
     # Set up routes:
     app.add_routes(
         [
+            web.view("/albums", AlbumsView),
+            web.view("/albums/{albumId}", AlbumView),
             web.view("/g_photos", GooglePhotosView),
             web.view("/g_photos/{albumId}", GooglePhotosView),
             web.view("/ping", Ping),
