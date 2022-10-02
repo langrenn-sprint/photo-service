@@ -23,3 +23,4 @@ class Album(DataClassJsonMixin):
     place: Optional[str] = field(default=None)
     title: Optional[str] = field(default=None)
     cover_photo_url: Optional[str] = field(default=None)
+    

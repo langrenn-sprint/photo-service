@@ -43,7 +43,7 @@ async def album() -> dict:
         "sync_on": False,
         "title": "2022 Ragde-sprinten",
         "cover_photo_url": "",
-   }
+    }
 
 
 @pytest.mark.integration
