@@ -18,9 +18,8 @@ class Album(DataClassJsonMixin):
     event_id: Optional[str] = field(default=None)
     camera_position: Optional[str] = field(default=None)
     changelog: Optional[List[Changelog]] = field(default=None)
+    cover_photo_url: Optional[str] = field(default=None)
     id: Optional[str] = field(default=None)
     last_sync_time: Optional[time] = field(default=None)
     place: Optional[str] = field(default=None)
     title: Optional[str] = field(default=None)
-    cover_photo_url: Optional[str] = field(default=None)
-    
