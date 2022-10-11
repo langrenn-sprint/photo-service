@@ -11,7 +11,8 @@ class Photo(DataClassJsonMixin):
     """Data class with details about a photo."""
 
     name: str
-    finish_line: bool = False
+    is_photo_finish: bool = False
+    is_start_registration: bool = False
     starred: bool = False
     event_id: Optional[str] = field(default=None)
     creation_time: Optional[time] = field(default=None)

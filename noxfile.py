@@ -8,7 +8,7 @@ package = "photo_service"
 locations = "photo_service", "tests", "noxfile.py"
 nox.options.envdir = ".cache"
 nox.options.reuse_existing_virtualenvs = True
-nox.options.stop_on_first_error = False
+nox.options.stop_on_first_error = True
 nox.options.sessions = (
     "lint",
     "mypy",

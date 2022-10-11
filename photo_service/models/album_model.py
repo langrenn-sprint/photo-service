@@ -14,6 +14,7 @@ class Album(DataClassJsonMixin):
 
     g_id: str
     is_photo_finish: bool = False
+    is_start_registration: bool = False
     sync_on: bool = False
     event_id: Optional[str] = field(default=None)
     camera_position: Optional[str] = field(default=None)
