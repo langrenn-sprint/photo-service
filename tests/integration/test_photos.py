@@ -34,7 +34,8 @@ async def photo() -> dict:
     """An photo object for testing."""
     return {
         "name": "IMG_6291.JPG",
-        "finish_line": False,
+        "is_photo_finish": True,
+        "is_start_registration": False,
         "starred": False,
         "event_id": "1e95458c-e000-4d8b-beda-f860c77fd758",
         "creation_time": "2022-03-05T06:41:52",

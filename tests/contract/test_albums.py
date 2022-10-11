@@ -50,6 +50,7 @@ async def album() -> dict:
         "event_id": "1e95458c-e000-4d8b-beda-f860c77fd758",
         "g_id": "APU9jkgGt20Pq1SHqEjC1TiOuOliKbH5P64k_roOwf_sXKuY57KFCCQ2g9UbOwRUg6OSVG4C9GZK",
         "is_photo_finish": True,
+        "is_start_registration": False,
         "last_sync_time": "2022-09-25T16:41:52",
         "place": "finish",
         "sync_on": False,
