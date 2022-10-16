@@ -51,12 +51,35 @@ async def photo() -> dict:
     }
 
 
+@pytest.fixture
+async def starred_photo() -> dict:
+    """An photo object for testing."""
+    return {
+        "name": "IMG_6292.JPG",
+        "is_photo_finish": True,
+        "is_start_registration": False,
+        "starred": True,
+        "event_id": "1e95458c-e000-4d8b-beda-f860c77fd758",
+        "creation_time": "2022-03-05T06:51:52",
+        "information": "Test starred photo for sprint",
+        "race_id": "1e95458c-e000-4d8b-beda-f860c77fd758",
+        "raceclass": "K-Jr",
+        "biblist": [2, 4, 6],
+        "clublist": ["Kjelsås", "Lyn"],
+        "g_id": "APU9jkgGt2_roOwf_2g9UbOwRUg6OSVG4C9GZS",
+        "g_product_url": "https://photos.google.com/G4C9GZS",
+        "g_base_url": "https://lh3.googleusercontent.com/f_AEeh",
+        "ai_information": {"persons": "3", "numbers": [2], "texts": ["LYN"]},
+    }
+
+
 @pytest.mark.integration
 async def test_create_photo(
     client: _TestClient,
     mocker: MockFixture,
     token: MockFixture,
     photo: dict,
+    starred_photo: dict,
 ) -> None:
     """Should return Created, location header."""
     ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
@@ -69,13 +92,19 @@ async def test_create_photo(
         return_value=ID,
     )
 
-    request_body = photo
-
     headers = {
         hdrs.CONTENT_TYPE: "application/json",
         hdrs.AUTHORIZATION: f"Bearer {token}",
     }
 
+    request_body = photo
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.post("/photos", headers=headers, json=request_body)
+        assert resp.status == 201
+        assert f"/photos/{ID}" in resp.headers[hdrs.LOCATION]
+
+    request_body = starred_photo
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
         resp = await client.post("/photos", headers=headers, json=request_body)
@@ -187,6 +216,32 @@ async def test_get_all_photos(
         assert type(photos) is list
         assert len(photos) > 0
         assert ID == photos[0]["id"]
+
+
+@pytest.mark.integration
+async def test_get_starred_photos(
+    client: _TestClient, mocker: MockFixture, token: MockFixture
+) -> None:
+    """Should return OK and a valid json body."""
+    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "photo_service.adapters.photos_adapter.PhotosAdapter.get_all_photos",
+        return_value=[
+            {"id": ID, "name": "Oslo Skagen Sprint", "starred": False},
+            {"id": "starred", "name": "Oslo Skagen Sprint2", "starred": True},
+        ],
+    )
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.get("/photos?limit=2")
+        assert resp.status == 200
+        assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
+        photos = await resp.json()
+        assert type(photos) is list
+        assert len(photos) == 2
+        assert "starred" == photos[0]["id"]
+        assert ID == photos[1]["id"]
 
 
 @pytest.mark.integration

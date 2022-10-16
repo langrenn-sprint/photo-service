@@ -41,6 +41,13 @@ paths:
           schema:
             type: string
             format: uuid
+        - name: limit
+          in: path
+          description: limit number of results, starred photos first
+          required: false
+          schema:
+            type: integer
+            format: uuid
         - name: raceclass
           in: path
           description: raceclass (FK)

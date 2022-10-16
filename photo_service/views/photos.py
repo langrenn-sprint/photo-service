@@ -39,19 +39,39 @@ class PhotosView(View):
             g_id = self.request.rel_url.query["gId"]
             photo = await PhotosService.get_photo_by_g_id(db, g_id)
             body = photo.to_json()
-        elif "raceclass" in self.request.rel_url.query:
-            raceclass = self.request.rel_url.query["raceclass"]
-            photos = await PhotosService.get_photos_by_raceclass(db, raceclass)
-            list = []
-            for _e in photos:
-                list.append(_e.to_dict())
-            body = json.dumps(list, default=str, ensure_ascii=False)
         else:
-            photos = await PhotosService.get_all_photos(db)
-            list = []
+            if "raceclass" in self.request.rel_url.query:
+                raceclass = self.request.rel_url.query["raceclass"]
+                photos = await PhotosService.get_photos_by_raceclass(db, raceclass)
+            else:
+                photos = await PhotosService.get_all_photos(db)
+            _list = []
             for _e in photos:
-                list.append(_e.to_dict())
-            body = json.dumps(list, default=str, ensure_ascii=False)
+                _list.append(_e.to_dict())
+            if "limit" in self.request.rel_url.query:
+                limit = int(self.request.rel_url.query["limit"])
+                limited_list = []
+                i = 0
+                # keep only the select starred photos, newest first
+                for photo in reversed(_list):  # type: ignore
+                    if i < limit:
+                        if photo["starred"]:  # type: ignore
+                            limited_list.append(photo)
+                            i += 1
+                    else:
+                        break
+                else:
+                    # if needed select latest ustarred photos
+                    for photo in reversed(_list):  # type: ignore
+                        if i < limit:
+                            if not photo["starred"]:  # type: ignore
+                                limited_list.append(photo)
+                                i += 1
+                        else:
+                            break
+                body = json.dumps(limited_list, default=str, ensure_ascii=False)
+            else:
+                body = json.dumps(_list, default=str, ensure_ascii=False)
         return Response(status=200, body=body, content_type="application/json")
 
     async def post(self) -> Response:
