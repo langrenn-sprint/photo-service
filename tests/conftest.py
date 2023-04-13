@@ -5,14 +5,12 @@ import time
 from typing import Any
 
 from aiohttp.test_utils import TestClient as _TestClient
-from dotenv import load_dotenv
 import pytest
 import requests
-from requests.exceptions import ConnectionError
+from requests.exceptions import ConnectionError, Timeout
 
 from photo_service import create_app
 
-load_dotenv()
 HOST_PORT = int(env.get("HOST_PORT", "8080"))
 
 
@@ -26,12 +24,14 @@ async def client(aiohttp_client: Any) -> _TestClient:
 
 def is_responsive(url: Any) -> Any:
     """Return true if response from service is 200."""
-    url = f"{url}/ready"
+    url = f"{url}/ping"
     try:
         response = requests.get(url, timeout=5)
         if response.status_code == 200:
             time.sleep(2)  # sleep extra 2 sec
             return True
+    except Timeout:
+        return False
     except ConnectionError:
         return False
 
