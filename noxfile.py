@@ -6,12 +6,11 @@ from nox_poetry import Session, session
 
 package = "photo_service"
 locations = "photo_service", "tests", "noxfile.py"
-nox.options.envdir = ".cache"
-nox.options.reuse_existing_virtualenvs = True
 nox.options.stop_on_first_error = True
 nox.options.sessions = (
-    "lint",
     "mypy",
+    "black",
+    "lint",
     "pytype",
     "unit_tests",
     "integration_tests",
@@ -19,7 +18,53 @@ nox.options.sessions = (
 )
 
 
-@session(python="3.10")
+@session(python=["3.11"])
+def clean(session: Session) -> None:
+    """Clean the project."""
+    session.run(
+        "py3clean",
+        ".",
+        external=True,
+    )
+    session.run(
+        "rm",
+        "-rf",
+        ".cache",
+        external=True,
+    )
+    session.run(
+        "rm",
+        "-rf",
+        ".pytest_cache",
+        external=True,
+    )
+    session.run(
+        "rm",
+        "-rf",
+        ".pytype",
+        external=True,
+    )
+    session.run(
+        "rm",
+        "-rf",
+        "dist",
+        external=True,
+    )
+    session.run(
+        "rm",
+        "-rf",
+        ".mypy_cache",
+        external=True,
+    )
+    session.run(
+        "rm",
+        "-f",
+        ".coverage",
+        external=True,
+    )
+
+
+@session(python="3.11")
 def unit_tests(session: Session) -> None:
     """Run the unit test suite."""
     args = session.posargs
@@ -40,7 +85,7 @@ def unit_tests(session: Session) -> None:
     )
 
 
-@session(python="3.10")
+@session(python=["3.10", "3.11"])
 def integration_tests(session: Session) -> None:
     """Run the integration test suite."""
     args = session.posargs or ["--cov"]
@@ -70,7 +115,7 @@ def integration_tests(session: Session) -> None:
     )
 
 
-@session(python="3.10")
+@session(python="3.11")
 def contract_tests(session: Session) -> None:
     """Run the contract test suite."""
     args = session.posargs
@@ -102,7 +147,7 @@ def contract_tests(session: Session) -> None:
     )
 
 
-@session(python="3.10")
+@session(python=["3.10", "3.11"])
 def black(session: Session) -> None:
     """Run black code formatter."""
     args = session.posargs or locations
@@ -110,7 +155,7 @@ def black(session: Session) -> None:
     session.run("black", *args)
 
 
-@session(python="3.10")
+@session(python=["3.10", "3.11"])
 def lint(session: Session) -> None:
     """Lint using flake8."""
     args = session.posargs or locations
@@ -124,12 +169,11 @@ def lint(session: Session) -> None:
         "flake8-import-order",
         "darglint",
         "flake8-assertive",
-        "flake8-eradicate",
     )
     session.run("flake8", *args)
 
 
-@session(python="3.10")
+@session(python=["3.10", "3.11"])
 def safety(session: Session) -> None:
     """Scan dependencies for insecure packages."""
     requirements = session.poetry.export_requirements()
@@ -137,7 +181,7 @@ def safety(session: Session) -> None:
     session.run("safety", "check", "--full-report", f"--file={requirements}")
 
 
-@session(python="3.10")
+@session(python=["3.10", "3.11"])
 def mypy(session: Session) -> None:
     """Type-check using mypy."""
     args = session.posargs or [
@@ -161,7 +205,7 @@ def pytype(session: Session) -> None:
     session.run("pytype", *args)
 
 
-@session(python="3.10")
+@session(python=["3.10", "3.11"])
 def xdoctest(session: Session) -> None:
     """Run examples with xdoctest."""
     args = session.posargs or ["all"]
@@ -170,7 +214,7 @@ def xdoctest(session: Session) -> None:
     session.run("python", "-m", "xdoctest", package, *args)
 
 
-@session(python="3.10")
+@session(python=["3.10", "3.11"])
 def docs(session: Session) -> None:
     """Build the documentation."""
     session.install(".")
@@ -178,7 +222,7 @@ def docs(session: Session) -> None:
     session.run("sphinx-build", "docs", "docs/_build")
 
 
-@session(python="3.10")
+@session(python=["3.10", "3.11"])
 def coverage(session: Session) -> None:
     """Upload coverage data."""
     session.install("coverage[toml]", "codecov")

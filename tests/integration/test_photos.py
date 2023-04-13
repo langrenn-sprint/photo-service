@@ -301,6 +301,7 @@ async def test_delete_photo_by_id(
 
 # Bad cases
 
+
 # Mandatory properties missing at create and update:
 @pytest.mark.integration
 async def test_create_photo_missing_mandatory_property(

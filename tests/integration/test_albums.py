@@ -219,6 +219,7 @@ async def test_delete_album_by_id(
 
 # Bad cases
 
+
 # Mandatory properties missing at create and update:
 @pytest.mark.integration
 async def test_create_album_missing_mandatory_property(

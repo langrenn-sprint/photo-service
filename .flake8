@@ -1,9 +1,11 @@
 [flake8]
-select = ANN,B,B9,BLK,C,D,DAR,E,F,I,S,W
+select = ANN,A50,B,B9,BLK,C,D,DAR,E,F,I,S,W,N
 docstring-convention = google
-max-complexity = 12
-ignore = ANN101,ANN401,B009,E203,E501,S101, W503
-max-line-length = 88
-per-file-ignores = __init__.py:F401,tests/*:S101,tests/*:E800
-import-order-style = google
+max-complexity = 21
+ignore = ANN001,ANN101,ANN401,B009,E203,E501,W503
+max-line-length = 120
+per-file-ignores =
+    __init__.py: F401
+    tests/*: S101,E800
 application-import-names = photo_service, tests
+import-order-style = google
