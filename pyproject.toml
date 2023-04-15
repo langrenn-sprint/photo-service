@@ -11,7 +11,7 @@ license = "Apache-2.0"
 name = "photo_service"
 readme = "README.md"
 repository = "https://github.com/langrenn-sprint/photo-service"
-version = "1.1.0"
+version = "1.2.0"
 
 [tool.poetry.dependencies]
 aiohttp = "^3.8.1"
