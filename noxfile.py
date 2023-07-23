@@ -126,7 +126,6 @@ def contract_tests(session: Session) -> None:
         "pytest_mock",
         "pytest-asyncio",
         "requests",
-        "aioresponses",
     )
     session.run(
         "pytest",
