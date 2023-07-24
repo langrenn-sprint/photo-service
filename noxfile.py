@@ -154,7 +154,7 @@ def black(session: Session) -> None:
     session.run("black", *args)
 
 
-@session(python=["3.10", "3.11"])
+@session(python=["3.11"])
 def lint(session: Session) -> None:
     """Lint using flake8."""
     args = session.posargs or locations
