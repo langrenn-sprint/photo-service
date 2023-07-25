@@ -90,10 +90,6 @@ async def test_create_video_event(
     """Should return Created, location header."""
     ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "photo_service.services.video_events_service.create_id",
-        return_value=ID,
-    )
-    mocker.patch(
         "photo_service.adapters.video_events_adapter.VideoEventsAdapter.create_video_event",
         return_value=ID,
     )
