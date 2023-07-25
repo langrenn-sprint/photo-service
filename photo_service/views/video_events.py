@@ -44,6 +44,4 @@ class VideoEventsView(View):
             raise e from e
 
         response = await AzureServiceBusService.receive_messages(db)
-        body = str(response)
-
-        return Response(status=201, body=body, content_type="application/json")
+        return Response(status=201, body=response, content_type="application/json")

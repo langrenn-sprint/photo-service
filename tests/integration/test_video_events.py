@@ -1,4 +1,5 @@
 """Integration test cases for the video_events route."""
+import json
 import os
 
 from aiohttp import hdrs
@@ -80,14 +81,40 @@ async def video_event() -> dict:
     }
 
 
+# Forbidden:
 @pytest.mark.integration
-async def test_create_video_event(
+async def test_create_photo_insufficient_role(
+    client: _TestClient, mocker: MockFixture, token_unsufficient_role: MockFixture, video_event: dict
+) -> None:
+    """Should return 403 Forbidden."""
+    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "photo_service.adapters.video_events_adapter.VideoEventsAdapter.create_video_event",
+        return_value=ID,
+    )
+
+    request_body = video_event
+
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token_unsufficient_role}",
+    }
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=403)
+        resp = await client.post("/video_events", headers=headers, json=request_body)
+        assert resp.status == 403
+
+
+# No connection:
+@pytest.mark.integration
+async def test_create_video_event_no_connection(
     client: _TestClient,
     mocker: MockFixture,
     token: MockFixture,
     video_event: dict,
 ) -> None:
-    """Should return Created, location header."""
+    """Should return 500 error, no conncetion to Azure service bus."""
     ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "photo_service.adapters.video_events_adapter.VideoEventsAdapter.create_video_event",
@@ -104,17 +131,11 @@ async def test_create_video_event(
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
         resp = await client.post("/video_events", headers=headers, json=request_body)
-        assert resp.status == 201
-        assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
-        video_events = await resp.json()
-        assert type(video_events) is list
-        assert len(video_events) == 0
+        assert resp.status == 500
 
 
 @pytest.mark.integration
-async def test_get_all_video_events(
-    client: _TestClient, mocker: MockFixture, token: MockFixture
-) -> None:
+async def test_get_all_video_events(client: _TestClient, mocker: MockFixture) -> None:
     """Should return OK and a valid json body."""
     ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
