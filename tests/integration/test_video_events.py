@@ -1,5 +1,4 @@
 """Integration test cases for the video_events route."""
-import json
 import os
 
 from aiohttp import hdrs
@@ -84,7 +83,10 @@ async def video_event() -> dict:
 # Forbidden:
 @pytest.mark.integration
 async def test_create_photo_insufficient_role(
-    client: _TestClient, mocker: MockFixture, token_unsufficient_role: MockFixture, video_event: dict
+    client: _TestClient,
+    mocker: MockFixture,
+    token_unsufficient_role: MockFixture,
+    video_event: dict,
 ) -> None:
     """Should return 403 Forbidden."""
     ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
