@@ -1,4 +1,4 @@
-"""Module for admin of sporting photos."""
+"""Module for admin of photo service."""
 import logging
 import os
 from typing import Any
@@ -15,6 +15,7 @@ from .views import (
     PhotoView,
     Ping,
     Ready,
+    VideoEventsView,
 )
 
 
@@ -49,6 +50,7 @@ async def create_app() -> web.Application:
             web.view("/ready", Ready),
             web.view("/photos", PhotosView),
             web.view("/photos/{photoId}", PhotoView),
+            web.view("/video_events", VideoEventsView),
         ]
     )
 
