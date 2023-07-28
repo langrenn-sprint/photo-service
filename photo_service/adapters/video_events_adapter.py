@@ -16,10 +16,12 @@ class VideoEventsAdapter(Adapter):
         return result
 
     @classmethod
-    async def get_all_video_events(cls: Any, db: Any) -> List:  # pragma: no cover
+    async def get_all_video_events(
+        cls: Any, db: Any, event_id: str
+    ) -> List:  # pragma: no cover
         """Get all video_events function."""
         video_events: List = []
-        cursor = db.video_events_collection.find()
+        cursor = db.video_events_collection.find({"event_id": event_id})
         for video_event in await cursor.to_list(None):
             video_events.append(video_event)
         return video_events

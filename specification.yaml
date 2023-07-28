@@ -16,6 +16,52 @@ tags:
   - name: competition-format
     description: competition format operations
 paths:
+  /video_events:
+    get:
+      description: Get a list of video_events
+      requestBody:
+        eventId:
+          description: The event id
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VideoEvent"
+      responses:
+        200:
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VideoEventsCollection"
+    post:
+      tags:
+        - video_events
+      security:
+        - bearerAuth: []
+      description: Import new video_events
+      requestBody:
+        eventId:
+          description: The event id
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VideoEvent"
+        queueName:
+          description: The queue name
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VideoEvent"
+        description: Video events will be imported from the service bus queue
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VideoEvent"
+      responses:
+        201:
+          description: Created
+
+
   /photos:
     post:
       tags:
@@ -103,7 +149,6 @@ paths:
       responses:
         204:
           description: No content
-
   securitySchemes:
     bearerAuth:
       type: http

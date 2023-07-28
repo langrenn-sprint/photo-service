@@ -82,7 +82,7 @@ async def video_event() -> dict:
 
 # Forbidden:
 @pytest.mark.integration
-async def test_create_photo_insufficient_role(
+async def test_create_video_events_insufficient_role(
     client: _TestClient,
     mocker: MockFixture,
     token_unsufficient_role: MockFixture,
@@ -90,6 +90,8 @@ async def test_create_photo_insufficient_role(
 ) -> None:
     """Should return 403 Forbidden."""
     ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    event_id = "test_event_id"
+
     mocker.patch(
         "photo_service.adapters.video_events_adapter.VideoEventsAdapter.create_video_event",
         return_value=ID,
@@ -101,10 +103,11 @@ async def test_create_photo_insufficient_role(
         hdrs.CONTENT_TYPE: "application/json",
         hdrs.AUTHORIZATION: f"Bearer {token_unsufficient_role}",
     }
+    url = f"/video_events?eventId={event_id}&queueName=video_events"
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=403)
-        resp = await client.post("/video_events", headers=headers, json=request_body)
+        resp = await client.post(url, headers=headers, json=request_body)
         assert resp.status == 403
 
 
@@ -116,8 +119,9 @@ async def test_create_video_event_no_connection(
     token: MockFixture,
     video_event: dict,
 ) -> None:
-    """Should return 500 error, no conncetion to Azure service bus."""
+    """Should return 400 error, no conncetion to Azure service bus."""
     ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    event_id = "test_event_id"
     mocker.patch(
         "photo_service.adapters.video_events_adapter.VideoEventsAdapter.create_video_event",
         return_value=ID,
@@ -129,52 +133,39 @@ async def test_create_video_event_no_connection(
         hdrs.CONTENT_TYPE: "application/json",
         hdrs.AUTHORIZATION: f"Bearer {token}",
     }
+    url = f"/video_events?eventId={event_id}&queueName=video_events"
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
-        resp = await client.post("/video_events", headers=headers, json=request_body)
-        assert resp.status == 500
+        resp = await client.post(url, headers=headers, json=request_body)
+        assert resp.status == 400
 
 
+# No connection:
 @pytest.mark.integration
-async def test_get_all_video_events(client: _TestClient, mocker: MockFixture) -> None:
-    """Should return OK and a valid json body."""
+async def test_create_video_event_missing_input(
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    video_event: dict,
+) -> None:
+    """Should return 400 error, http bad request."""
     ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    event_id = "test_event_id"
     mocker.patch(
-        "photo_service.adapters.video_events_adapter.VideoEventsAdapter.get_all_video_events",
-        return_value=[
-            {
-                "id": ID,
-                "events": [
-                    {
-                        "id": "3733eb36935e4d73800a9cf36185d5a2",
-                        "type": "personLineEvent",
-                        "detectionIds": ["90d55bfc64c54bfd98226697ad8445ca"],
-                        "properties": {
-                            "trackingId": "90d55bfc64c54bfd98226697ad8445ca",
-                            "status": "CrossLeft",
-                        },
-                        "zone": "doorcamera",
-                    }
-                ],
-                "sourceInfo": {
-                    "id": "camera_id",
-                    "timestamp": "2020-08-24T06:06:53.261Z",
-                    "width": 608,
-                    "height": 342,
-                    "frameId": "1340",
-                    "imagePath": "",
-                },
-            }
-        ],
+        "photo_service.adapters.video_events_adapter.VideoEventsAdapter.create_video_event",
+        return_value=ID,
     )
 
+    request_body = video_event
+
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+    url = f"/video_events?eventId={event_id}"
+
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
-        resp = await client.get("/video_events")
-        assert resp.status == 200
-        assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
-        video_events = await resp.json()
-        assert type(video_events) is list
-        assert len(video_events) > 0
-        assert ID == video_events[0]["id"]
+        resp = await client.post(url, headers=headers, json=request_body)
+        assert resp.status == 400

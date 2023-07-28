@@ -3,6 +3,7 @@ import json
 import os
 
 from aiohttp.web import (
+    HTTPBadRequest,
     Response,
     View,
 )
@@ -24,9 +25,10 @@ class VideoEventsView(View):
     async def get(self) -> Response:
         """Get route function."""
         db = self.request.app["db"]
+        event_id = self.request.match_info["eventId"]
 
         # get all video_events
-        video_events = await VideoEventsAdapter.get_all_video_events(db)
+        video_events = await VideoEventsAdapter.get_all_video_events(db, event_id)
         list = []
         for _e in video_events:
             list.append(_e)
@@ -43,5 +45,15 @@ class VideoEventsView(View):
         except Exception as e:
             raise e from e
 
-        response = await AzureServiceBusService.receive_messages(db)
+        try:
+            event_id = self.request.match_info["eventId"]
+            queue_name = self.request.rel_url.query["queueName"]
+        except Exception as e:
+            raise HTTPBadRequest(
+                reason="Mandatory param is missing - eventId/queueName."
+            ) from e
+
+        response = await AzureServiceBusService.receive_messages(
+            db, event_id, queue_name
+        )
         return Response(status=201, body=response, content_type="application/json")

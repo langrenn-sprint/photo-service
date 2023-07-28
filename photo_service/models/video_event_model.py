@@ -9,7 +9,9 @@ from dataclasses_json import DataClassJsonMixin
 class VideoEvent(DataClassJsonMixin):
     """Data class with details about a sync-ed video_event."""
 
-    id: Optional[str] = field(default=None)
+    event_id: str
+    id: str
+    queue_name: str
     events: Optional[List[Dict]] = field(default=None)
     sourceInfo: Optional[Dict] = field(default=None)
     detections: Optional[List[Dict]] = field(default=None)
