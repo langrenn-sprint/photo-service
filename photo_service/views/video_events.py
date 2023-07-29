@@ -25,7 +25,12 @@ class VideoEventsView(View):
     async def get(self) -> Response:
         """Get route function."""
         db = self.request.app["db"]
-        event_id = self.request.match_info["eventId"]
+        try:
+            event_id = self.request.rel_url.query["eventId"]
+        except Exception as e:
+            raise HTTPBadRequest(
+                reason="Mandatory param is missing - eventId."
+            ) from e
 
         # get all video_events
         video_events = await VideoEventsAdapter.get_all_video_events(db, event_id)
@@ -46,7 +51,7 @@ class VideoEventsView(View):
             raise e from e
 
         try:
-            event_id = self.request.match_info["eventId"]
+            event_id = self.request.rel_url.query["eventId"]
             queue_name = self.request.rel_url.query["queueName"]
         except Exception as e:
             raise HTTPBadRequest(
