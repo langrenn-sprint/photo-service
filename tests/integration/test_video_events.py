@@ -113,13 +113,13 @@ async def test_create_video_events_insufficient_role(
 
 # No connection:
 @pytest.mark.integration
-async def test_create_video_event_no_connection(
+async def test_create_video_event_incorrect_queue_name(
     client: _TestClient,
     mocker: MockFixture,
     token: MockFixture,
     video_event: dict,
 ) -> None:
-    """Should return 400 error, no conncetion to Azure service bus."""
+    """Should return 422 error."""
     ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     event_id = "test_event_id"
     mocker.patch(
@@ -133,12 +133,12 @@ async def test_create_video_event_no_connection(
         hdrs.CONTENT_TYPE: "application/json",
         hdrs.AUTHORIZATION: f"Bearer {token}",
     }
-    url = f"/video_events?eventId={event_id}&queueName=video_events"
+    url = f"/video_events?eventId={event_id}&queueName=invalid_queue"
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
         resp = await client.post(url, headers=headers, json=request_body)
-        assert resp.status == 400
+        assert resp.status == 422
 
 
 # No connection:

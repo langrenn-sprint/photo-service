@@ -28,9 +28,7 @@ class VideoEventsView(View):
         try:
             event_id = self.request.rel_url.query["eventId"]
         except Exception as e:
-            raise HTTPBadRequest(
-                reason="Mandatory param is missing - eventId."
-            ) from e
+            raise HTTPBadRequest(reason="Mandatory param is missing - eventId.") from e
 
         # get all video_events
         video_events = await VideoEventsAdapter.get_all_video_events(db, event_id)
