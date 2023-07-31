@@ -357,11 +357,11 @@ tox = ["tox"]
 
 [[package]]
 name = "dataclasses-json"
-version = "0.5.13"
+version = "0.5.14"
 description = "Easily serialize dataclasses to and from JSON."
 category = "main"
 optional = false
-python-versions = ">=3.7,<3.12"
+python-versions = ">=3.7,<3.13"
 
 [package.dependencies]
 marshmallow = ">=3.18.0,<4.0.0"
@@ -1879,8 +1879,8 @@ cryptography = [
     {file = "cryptography-39.0.2.tar.gz", hash = "sha256:bc5b871e977c8ee5a1bbc42fa8d19bcc08baf0c51cbf1586b0e87a2694dde42f"},
 ]
 dataclasses-json = [
-    {file = "dataclasses_json-0.5.13-py3-none-any.whl", hash = "sha256:97b13447f2e0b96aa6e52509040c12d70c61df8a972f3feb5cc89a6da5e177bd"},
-    {file = "dataclasses_json-0.5.13.tar.gz", hash = "sha256:425810e1356fb6917eb7c323e3aaee0c9398fc55b5001d3532381679f727fc18"},
+    {file = "dataclasses_json-0.5.14-py3-none-any.whl", hash = "sha256:5ec6fed642adb1dbdb4182badb01e0861badfd8fda82e3b67f44b2d1e9d10d21"},
+    {file = "dataclasses_json-0.5.14.tar.gz", hash = "sha256:d82896a94c992ffaf689cd1fafc180164e2abdd415b8f94a7f78586af5886236"},
 ]
 devtools = [
     {file = "devtools-0.11.0-py3-none-any.whl", hash = "sha256:22a3b65b58713ccd7e8586feffdefaad57bbdbc6ff76bd68ecf3150a00cf41e3"},

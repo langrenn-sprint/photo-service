@@ -55,8 +55,10 @@ class VideoEventsView(View):
             raise HTTPBadRequest(
                 reason="Mandatory param is missing - eventId/queueName."
             ) from e
-
-        response = await AzureServiceBusService.receive_messages(
+        response_list = await AzureServiceBusService.receive_messages(
             db, event_id, queue_name
         )
+        # convert response from list to json
+        response = json.dumps(response_list)
+
         return Response(status=201, body=response, content_type="application/json")
