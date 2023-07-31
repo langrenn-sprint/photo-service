@@ -2,7 +2,7 @@
 import json
 import logging
 import os
-from typing import Any
+from typing import Any, List
 
 from aiohttp.web_exceptions import HTTPUnprocessableEntity
 from azure.servicebus.aio import ServiceBusClient
@@ -33,7 +33,7 @@ class AzureServiceBusService:
     @classmethod
     async def receive_messages(
         cls: Any, db: Any, event_id: str, my_queue_name: str
-    ) -> list:
+    ) -> List:
         """Receive messages from Azure Service Bus - return list of message ids."""
         message_id_list = []
         NAMESPACE_CONNECTION_STR = os.getenv("SERVICEBUS_NAMESPACE_CONNECTION_STR", "")
