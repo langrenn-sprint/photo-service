@@ -59,6 +59,6 @@ class VideoEventsView(View):
             db, event_id, queue_name
         )
         # convert response from list to json
-        response = json.dumps(response_list)
+        response = f"Hentet {len(response_list)} meldinger fra {queue_name}"
 
         return Response(status=201, body=response, content_type="application/json")
