@@ -39,6 +39,10 @@ class PhotosView(View):
             g_id = self.request.rel_url.query["gId"]
             photo = await PhotosService.get_photo_by_g_id(db, g_id)
             body = photo.to_json()
+        elif "gBaseUrl" in self.request.rel_url.query:
+            g_base_url = self.request.rel_url.query["gBaseUrl"]
+            photo = await PhotosService.get_photo_by_g_base_url(db, g_base_url)
+            body = photo.to_json()
         else:
             if "raceclass" in self.request.rel_url.query:
                 raceclass = self.request.rel_url.query["raceclass"]
