@@ -120,8 +120,8 @@ async def test_get_photo_by_g_base_url(
     ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     g_base_url = "https://storage.googleapis.com/langrenn-sprint/result3.jpg"
     mocker.patch(
-        "photo_service.adapters.photos_adapter.PhotosAdapter.get_photo_by_g_id",
-        return_value={"id": ID} | photo,  # type: ignore
+        "photo_service.adapters.photos_adapter.PhotosAdapter.get_photo_by_g_base_url",
+        return_value={"g_base_url": g_base_url} | photo,  # type: ignore
     )
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
