@@ -117,7 +117,6 @@ async def test_get_photo_by_g_base_url(
     client: _TestClient, mocker: MockFixture, token: MockFixture, photo: dict
 ) -> None:
     """Should return OK, and a body containing one photo."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     g_base_url = "https://storage.googleapis.com/langrenn-sprint/result3.jpg"
     mocker.patch(
         "photo_service.adapters.photos_adapter.PhotosAdapter.get_photo_by_g_base_url",
