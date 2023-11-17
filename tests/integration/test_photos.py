@@ -46,7 +46,7 @@ async def photo() -> dict:
         "clublist": ["Kjelsås", "Lyn"],
         "g_id": "APU9jkgGt2_roOwf_2g9UbOwRUg6OSVG4C9GZK",
         "g_product_url": "https://photos.google.com/G4C9GZK",
-        "g_base_url": "https://lh3.googleusercontent.com/f_AEeh",
+        "g_base_url": "https://storage.googleapis.com/langrenn-sprint/result3.jpg",
         "ai_information": {"persons": "3", "numbers": [5], "texts": ["LYN"]},
     }
 
@@ -68,7 +68,7 @@ async def starred_photo() -> dict:
         "clublist": ["Kjelsås", "Lyn"],
         "g_id": "APU9jkgGt2_roOwf_2g9UbOwRUg6OSVG4C9GZS",
         "g_product_url": "https://photos.google.com/G4C9GZS",
-        "g_base_url": "https://lh3.googleusercontent.com/f_AEeh",
+        "g_base_url": "https://storage.googleapis.com/langrenn-sprint/result3.jpg",
         "ai_information": {"persons": "3", "numbers": [2], "texts": ["LYN"]},
     }
 
