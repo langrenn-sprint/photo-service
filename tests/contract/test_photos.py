@@ -1,44 +1,64 @@
 """Contract test cases for ping."""
-import asyncio
 from copy import deepcopy
 import logging
 import os
 from typing import Any, AsyncGenerator
 
 from aiohttp import ClientSession, hdrs
+import motor.motor_asyncio
 import pytest
 from pytest_mock import MockFixture
 
+from photo_service.utils import db_utils
+
 USERS_HOST_SERVER = os.getenv("USERS_HOST_SERVER")
 USERS_HOST_PORT = os.getenv("USERS_HOST_PORT")
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_PORT = int(os.getenv("DB_PORT", 27017))
+DB_NAME = os.getenv("DB_NAME", "events_test")
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
 
 
 @pytest.fixture(scope="module")
-def event_loop(request: Any) -> Any:
-    """Redefine the event_loop fixture to have the same scope."""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
-
-
-@pytest.fixture(scope="module")
-@pytest.mark.asyncio
-async def clear_db(http_service: Any, token: MockFixture) -> AsyncGenerator:
-    """Delete all photos before we start."""
-    url = f"{http_service}/photos"
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
+@pytest.mark.asyncio(scope="module")
+async def token(http_service: Any) -> str:
+    """Create a valid token."""
+    url = f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/login"
+    headers = {hdrs.CONTENT_TYPE: "application/json"}
+    request_body = {
+        "username": os.getenv("ADMIN_USERNAME"),
+        "password": os.getenv("ADMIN_PASSWORD"),
     }
-
     session = ClientSession()
-    async with session.get(url) as response:
-        photos = await response.json()
-        for photo in photos:
-            photo_id = photo["id"]
-            async with session.delete(f"{url}/{photo_id}", headers=headers) as response:
-                pass
+    async with session.post(url, headers=headers, json=request_body) as response:
+        body = await response.json()
     await session.close()
+    if response.status != 200:
+        logging.error(f"Got unexpected status {response.status} from {http_service}.")
+    return body["token"]
+
+
+@pytest.fixture(scope="module", autouse=True)
+@pytest.mark.asyncio(scope="module")
+async def clear_db() -> AsyncGenerator:
+    """Delete all events before we start."""
+    mongo = motor.motor_asyncio.AsyncIOMotorClient(  # type: ignore
+        host=DB_HOST, port=DB_PORT, username=DB_USER, password=DB_PASSWORD
+    )
+    try:
+        await db_utils.drop_db_and_recreate_indexes(mongo, DB_NAME)
+    except Exception as error:
+        logging.error(f"Failed to drop database {DB_NAME}: {error}")
+        raise error
+
     yield
+
+    try:
+        await db_utils.drop_db(mongo, DB_NAME)
+    except Exception as error:
+        logging.error(f"Failed to drop database {DB_NAME}: {error}")
+        raise error
 
 
 @pytest.fixture(scope="module")
@@ -60,25 +80,6 @@ async def photo() -> dict:
         "g_base_url": "https://lh3.googleusercontent.com/f_AEeh",
         "ai_information": {"persons": "3", "numbers": [5], "texts": ["LYN"]},
     }
-
-
-@pytest.fixture(scope="module")
-@pytest.mark.asyncio
-async def token(http_service: Any) -> str:
-    """Create a valid token."""
-    url = f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/login"
-    headers = {hdrs.CONTENT_TYPE: "application/json"}
-    request_body = {
-        "username": os.getenv("ADMIN_USERNAME"),
-        "password": os.getenv("ADMIN_PASSWORD"),
-    }
-    session = ClientSession()
-    async with session.post(url, headers=headers, json=request_body) as response:
-        body = await response.json()
-    await session.close()
-    if response.status != 200:
-        logging.error(f"Got unexpected status {response.status} from {http_service}.")
-    return body["token"]
 
 
 @pytest.mark.contract

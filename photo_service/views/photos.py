@@ -21,7 +21,7 @@ from photo_service.services import (
     PhotoNotFoundException,
     PhotosService,
 )
-from .utils import extract_token_from_request
+from photo_service.utils.jwt_utils import extract_token_from_request
 
 load_dotenv()
 HOST_SERVER = os.getenv("HOST_SERVER", "localhost")

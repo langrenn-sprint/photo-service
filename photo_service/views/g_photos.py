@@ -10,7 +10,7 @@ from aiohttp.web import (
 from photo_service.services import (
     GooglePhotosService,
 )
-from .utils import extract_token_from_request
+from photo_service.utils.jwt_utils import extract_token_from_request
 
 
 class GooglePhotosView(View):
