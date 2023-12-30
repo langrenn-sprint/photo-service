@@ -249,6 +249,30 @@ async def test_get_starred_photos(
     """Should return OK and a valid json body."""
     ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
+        "photo_service.adapters.photos_adapter.PhotosAdapter.get_photos_starred",
+        return_value=[
+            {"id": "starred", "name": "Oslo Skagen Sprint2", "starred": True},
+        ],
+    )
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.get("/photos?starred=true")
+        assert resp.status == 200
+        assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
+        photos = await resp.json()
+        assert type(photos) is list
+        assert len(photos) == 1
+        assert photos[0]["starred"] is True
+
+
+@pytest.mark.integration
+async def test_get_number_of_photos(
+    client: _TestClient, mocker: MockFixture, token: MockFixture
+) -> None:
+    """Should return OK and a valid json body."""
+    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
         "photo_service.adapters.photos_adapter.PhotosAdapter.get_all_photos",
         return_value=[
             {"id": ID, "name": "Oslo Skagen Sprint", "starred": False},
@@ -296,6 +320,38 @@ async def test_get_photos_by_raceclass(
         assert type(photos) is list
         assert len(photos) > 0
         assert raceclass == photos[0]["raceclass"]
+
+
+@pytest.mark.integration
+async def test_get_starred_photos_by_raceclass(
+    client: _TestClient, mocker: MockFixture, token: MockFixture
+) -> None:
+    """Should return OK and a valid json body."""
+    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    raceclass = "K-Jr"
+    mocker.patch(
+        "photo_service.adapters.photos_adapter.PhotosAdapter.get_photos_starred_by_raceclass",
+        return_value=[
+            {
+                "id": ID,
+                "name": "Oslo Skagen Sprint",
+                "finish_line": False,
+                "raceclass": raceclass,
+                "starred": True,
+            }
+        ],
+    )
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.get(f"/photos?raceclass={raceclass}&starred=true")
+        assert resp.status == 200
+        assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
+        photos = await resp.json()
+        assert type(photos) is list
+        assert len(photos) > 0
+        assert raceclass == photos[0]["raceclass"]
+        assert photos[0]["starred"] is True
 
 
 @pytest.mark.integration

@@ -44,11 +44,23 @@ class PhotosView(View):
             photo = await PhotosService.get_photo_by_g_base_url(db, g_base_url)
             body = photo.to_json()
         else:
+            starred = False
+            if "starred" in self.request.rel_url.query:
+                if self.request.rel_url.query["starred"] in ["true", "True"]:
+                    starred = True
             if "raceclass" in self.request.rel_url.query:
                 raceclass = self.request.rel_url.query["raceclass"]
-                photos = await PhotosService.get_photos_by_raceclass(db, raceclass)
+                if starred:
+                    photos = await PhotosService.get_photos_starred_by_raceclass(
+                        db, raceclass
+                    )
+                else:
+                    photos = await PhotosService.get_photos_by_raceclass(db, raceclass)
             else:
-                photos = await PhotosService.get_all_photos(db)
+                if starred:
+                    photos = await PhotosService.get_photos_starred(db)
+                else:
+                    photos = await PhotosService.get_all_photos(db)
             _list = []
             for _e in photos:
                 _list.append(_e.to_dict())

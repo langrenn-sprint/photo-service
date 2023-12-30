@@ -56,6 +56,26 @@ class PhotosAdapter(Adapter):
         return photos
 
     @classmethod
+    async def get_photos_starred_by_raceclass(
+        cls: Any, db: Any, raceclass: str
+    ) -> List:  # pragma: no cover
+        """Get all photos by raceclass function."""
+        photos: List = []
+        cursor = db.photos_collection.find({"starred": True, "raceclass": raceclass})
+        for photo in await cursor.to_list(None):
+            photos.append(photo)
+        return photos
+
+    @classmethod
+    async def get_photos_starred(cls: Any, db: Any) -> List:  # pragma: no cover
+        """Get all photos by raceclass function."""
+        photos: List = []
+        cursor = db.photos_collection.find({"starred": True})
+        for photo in await cursor.to_list(None):
+            photos.append(photo)
+        return photos
+
+    @classmethod
     async def update_photo(
         cls: Any, db: Any, id: str, photo: dict
     ) -> Optional[str]:  # pragma: no cover

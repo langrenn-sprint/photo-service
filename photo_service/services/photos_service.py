@@ -48,7 +48,48 @@ class PhotosService:
         _photos = await PhotosAdapter.get_photos_by_raceclass(db, raceclass)
         for e in _photos:
             photos.append(Photo.from_dict(e))
-        return photos
+        _s = sorted(
+            photos,
+            key=lambda k: (
+                k.creation_time is not None,
+                k.creation_time,
+            ),
+        )
+        return _s
+
+    @classmethod
+    async def get_photos_starred(cls: Any, db: Any) -> List[Photo]:
+        """Get all photos by raceclass function."""
+        photos: List[Photo] = []
+        _photos = await PhotosAdapter.get_photos_starred(db)
+        for e in _photos:
+            photos.append(Photo.from_dict(e))
+        _s = sorted(
+            photos,
+            key=lambda k: (
+                k.creation_time is not None,
+                k.creation_time,
+            ),
+        )
+        return _s
+
+    @classmethod
+    async def get_photos_starred_by_raceclass(
+        cls: Any, db: Any, raceclass: str
+    ) -> List[Photo]:
+        """Get all photos by raceclass function."""
+        photos: List[Photo] = []
+        _photos = await PhotosAdapter.get_photos_starred_by_raceclass(db, raceclass)
+        for e in _photos:
+            photos.append(Photo.from_dict(e))
+        _s = sorted(
+            photos,
+            key=lambda k: (
+                k.creation_time is not None,
+                k.creation_time,
+            ),
+        )
+        return _s
 
     @classmethod
     async def create_photo(cls: Any, db: Any, photo: Photo) -> Optional[str]:
