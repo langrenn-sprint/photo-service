@@ -251,7 +251,7 @@ async def test_get_starred_photos(
     mocker.patch(
         "photo_service.adapters.photos_adapter.PhotosAdapter.get_photos_starred",
         return_value=[
-            {"id": "starred", "name": "Oslo Skagen Sprint2", "starred": True},
+            {"id": ID, "name": "Oslo Skagen Sprint2", "starred": True},
         ],
     )
 
