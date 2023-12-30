@@ -6,11 +6,12 @@ from nox_poetry import Session, session
 
 package = "photo_service"
 locations = "photo_service", "tests", "noxfile.py"
+nox.options.envdir = ".cache"
+nox.options.reuse_existing_virtualenvs = True
 nox.options.stop_on_first_error = True
 nox.options.sessions = (
-    "mypy",
-    "black",
     "lint",
+    "mypy",
     "pytype",
     "unit_tests",
     "integration_tests",
@@ -64,7 +65,7 @@ def clean(session: Session) -> None:
     )
 
 
-@session(python="3.11")
+@session(python=["3.10", "3.11"])
 def unit_tests(session: Session) -> None:
     """Run the unit test suite."""
     args = session.posargs
@@ -115,7 +116,7 @@ def integration_tests(session: Session) -> None:
     )
 
 
-@session(python="3.11")
+@session(python=["3.11"])
 def contract_tests(session: Session) -> None:
     """Run the contract test suite."""
     args = session.posargs
@@ -134,15 +135,17 @@ def contract_tests(session: Session) -> None:
         "-rA",
         *args,
         env={
-            "CONFIG": "test",
+            "CONFIG": "production",
             "ADMIN_USERNAME": "admin",
             "ADMIN_PASSWORD": "password",
             "USERS_HOST_SERVER": "localhost",
             "USERS_HOST_PORT": "8081",
+            "JWT_SECRET": "secret",
             "JWT_EXP_DELTA_SECONDS": "60",
-            "DB_USER": "photo-service",
+            "DB_NAME": "events_test",
+            "DB_USER": "event-service",
             "DB_PASSWORD": "password",
-            "LOGGING_LEVEL": "DEBUG",
+            "LOGGING_LEVEL": "INFO",
         },
     )
 
@@ -197,7 +200,7 @@ def mypy(session: Session) -> None:
         session.run("mypy", f"--python-executable={sys.executable}", "noxfile.py")
 
 
-@session(python="3.10")
+@session(python=["3.10"])
 def pytype(session: Session) -> None:
     """Run the static type checker using pytype."""
     args = session.posargs or ["--disable=import-error", *locations]

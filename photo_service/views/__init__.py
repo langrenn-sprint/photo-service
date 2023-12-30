@@ -3,4 +3,3 @@ from .albums import AlbumsView, AlbumView
 from .g_photos import GooglePhotosView
 from .liveness import Ping, Ready
 from .photos import PhotosView, PhotoView
-from .video_events import VideoEventsView

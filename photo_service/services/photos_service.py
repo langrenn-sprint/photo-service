@@ -94,7 +94,8 @@ class PhotosService:
         # return the document if found:
         if photo:
             return Photo.from_dict(photo)
-        raise PhotoNotFoundException(f"Photo with g_base_url {g_base_url} not found") from None
+        informasjon = f"Photo with g_base_url {g_base_url} not found"
+        raise PhotoNotFoundException(informasjon) from None
 
     @classmethod
     async def get_photo_by_id(cls: Any, db: Any, id: str) -> Photo:
