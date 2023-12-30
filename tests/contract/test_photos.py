@@ -83,7 +83,7 @@ async def photo() -> dict:
 
 
 @pytest.mark.contract
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="module")
 async def test_create_photo(
     http_service: Any,
     token: MockFixture,
@@ -107,7 +107,7 @@ async def test_create_photo(
 
 
 @pytest.mark.contract
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="module")
 async def test_get_all_photos(http_service: Any, token: MockFixture) -> None:
     """Should return OK and a list of photos as json."""
     url = f"{http_service}/photos"
@@ -124,7 +124,7 @@ async def test_get_all_photos(http_service: Any, token: MockFixture) -> None:
 
 
 @pytest.mark.contract
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="module")
 async def test_get_photo_by_id(
     http_service: Any, token: MockFixture, photo: dict
 ) -> None:
@@ -149,7 +149,7 @@ async def test_get_photo_by_id(
 
 
 @pytest.mark.contract
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="module")
 async def test_update_photo(http_service: Any, token: MockFixture, photo: dict) -> None:
     """Should return No Content."""
     url = f"{http_service}/photos"
@@ -181,7 +181,7 @@ async def test_update_photo(http_service: Any, token: MockFixture, photo: dict) 
 
 
 @pytest.mark.contract
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="module")
 async def test_delete_photo(http_service: Any, token: MockFixture) -> None:
     """Should return No Content."""
     url = f"{http_service}/photos"

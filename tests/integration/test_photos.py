@@ -82,14 +82,14 @@ async def test_create_photo(
     starred_photo: dict,
 ) -> None:
     """Should return Created, location header."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "photo_service.services.photos_service.create_id",
-        return_value=ID,
+        return_value=id,
     )
     mocker.patch(
         "photo_service.adapters.photos_adapter.PhotosAdapter.create_photo",
-        return_value=ID,
+        return_value=id,
     )
 
     headers = {
@@ -102,14 +102,14 @@ async def test_create_photo(
         m.post("http://example.com:8081/authorize", status=204)
         resp = await client.post("/photos", headers=headers, json=request_body)
         assert resp.status == 201
-        assert f"/photos/{ID}" in resp.headers[hdrs.LOCATION]
+        assert f"/photos/{id}" in resp.headers[hdrs.LOCATION]
 
     request_body = starred_photo
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
         resp = await client.post("/photos", headers=headers, json=request_body)
         assert resp.status == 201
-        assert f"/photos/{ID}" in resp.headers[hdrs.LOCATION]
+        assert f"/photos/{id}" in resp.headers[hdrs.LOCATION]
 
 
 @pytest.mark.integration
@@ -141,11 +141,11 @@ async def test_get_photo_by_g_id(
     client: _TestClient, mocker: MockFixture, token: MockFixture, photo: dict
 ) -> None:
     """Should return OK, and a body containing one photo."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     g_id = "APU9jkgGt2_roOwf_2g9UbOwRUg6OSVG4C9GZK"
     mocker.patch(
         "photo_service.adapters.photos_adapter.PhotosAdapter.get_photo_by_g_id",
-        return_value={"id": ID} | photo,  # type: ignore
+        return_value={"id": id} | photo,  # type: ignore
     )
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
@@ -166,21 +166,21 @@ async def test_get_photo_by_id(
     client: _TestClient, mocker: MockFixture, token: MockFixture, photo: dict
 ) -> None:
     """Should return OK, and a body containing one photo."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "photo_service.adapters.photos_adapter.PhotosAdapter.get_photo_by_id",
-        return_value={"id": ID} | photo,  # type: ignore
+        return_value={"id": id} | photo,  # type: ignore
     )
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
 
-        resp = await client.get(f"/photos/{ID}")
+        resp = await client.get(f"/photos/{id}")
         assert resp.status == 200
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
         body = await resp.json()
         assert type(photo) is dict
-        assert body["id"] == ID
+        assert body["id"] == id
         assert body["name"] == photo["name"]
         assert body["creation_time"] == photo["creation_time"]
         assert body["information"] == photo["information"]
@@ -194,14 +194,14 @@ async def test_update_photo_by_id(
     photo: dict,
 ) -> None:
     """Should return No Content."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "photo_service.adapters.photos_adapter.PhotosAdapter.get_photo_by_id",
-        return_value={"id": ID} | photo,  # type: ignore
+        return_value={"id": id} | photo,  # type: ignore
     )
     mocker.patch(
         "photo_service.adapters.photos_adapter.PhotosAdapter.update_photo",
-        return_value={"id": ID} | photo,  # type: ignore
+        return_value={"id": id} | photo,  # type: ignore
     )
 
     headers = {
@@ -210,13 +210,13 @@ async def test_update_photo_by_id(
     }
     new_name = "Oslo Skagen sprint Oppdatert"
     request_body = deepcopy(photo)
-    request_body["id"] = ID
+    request_body["id"] = id
     request_body["name"] = new_name
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
 
-        resp = await client.put(f"/photos/{ID}", headers=headers, json=request_body)
+        resp = await client.put(f"/photos/{id}", headers=headers, json=request_body)
         assert resp.status == 204
 
 
@@ -225,10 +225,10 @@ async def test_get_all_photos(
     client: _TestClient, mocker: MockFixture, token: MockFixture
 ) -> None:
     """Should return OK and a valid json body."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "photo_service.adapters.photos_adapter.PhotosAdapter.get_all_photos",
-        return_value=[{"id": ID, "name": "Oslo Skagen Sprint", "finish_line": False}],
+        return_value=[{"id": id, "name": "Oslo Skagen Sprint", "finish_line": False}],
     )
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
@@ -239,7 +239,7 @@ async def test_get_all_photos(
         photos = await resp.json()
         assert type(photos) is list
         assert len(photos) > 0
-        assert ID == photos[0]["id"]
+        assert id == photos[0]["id"]
 
 
 @pytest.mark.integration
@@ -247,11 +247,11 @@ async def test_get_starred_photos(
     client: _TestClient, mocker: MockFixture, token: MockFixture
 ) -> None:
     """Should return OK and a valid json body."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "photo_service.adapters.photos_adapter.PhotosAdapter.get_photos_starred",
         return_value=[
-            {"id": ID, "name": "Oslo Skagen Sprint2", "starred": True},
+            {"id": id, "name": "Oslo Skagen Sprint2", "starred": True},
         ],
     )
 
@@ -271,11 +271,11 @@ async def test_get_number_of_photos(
     client: _TestClient, mocker: MockFixture, token: MockFixture
 ) -> None:
     """Should return OK and a valid json body."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "photo_service.adapters.photos_adapter.PhotosAdapter.get_all_photos",
         return_value=[
-            {"id": ID, "name": "Oslo Skagen Sprint", "starred": False},
+            {"id": id, "name": "Oslo Skagen Sprint", "starred": False},
             {"id": "starred", "name": "Oslo Skagen Sprint2", "starred": True},
         ],
     )
@@ -289,7 +289,7 @@ async def test_get_number_of_photos(
         assert type(photos) is list
         assert len(photos) == 2
         assert "starred" == photos[0]["id"]
-        assert ID == photos[1]["id"]
+        assert id == photos[1]["id"]
 
 
 @pytest.mark.integration
@@ -297,13 +297,13 @@ async def test_get_photos_by_raceclass(
     client: _TestClient, mocker: MockFixture, token: MockFixture
 ) -> None:
     """Should return OK and a valid json body."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     raceclass = "K-Jr"
     mocker.patch(
         "photo_service.adapters.photos_adapter.PhotosAdapter.get_photos_by_raceclass",
         return_value=[
             {
-                "id": ID,
+                "id": id,
                 "name": "Oslo Skagen Sprint",
                 "finish_line": False,
                 "raceclass": raceclass,
@@ -327,13 +327,13 @@ async def test_get_starred_photos_by_raceclass(
     client: _TestClient, mocker: MockFixture, token: MockFixture
 ) -> None:
     """Should return OK and a valid json body."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     raceclass = "K-Jr"
     mocker.patch(
         "photo_service.adapters.photos_adapter.PhotosAdapter.get_photos_starred_by_raceclass",
         return_value=[
             {
-                "id": ID,
+                "id": id,
                 "name": "Oslo Skagen Sprint",
                 "finish_line": False,
                 "raceclass": raceclass,
@@ -359,14 +359,14 @@ async def test_delete_photo_by_id(
     client: _TestClient, mocker: MockFixture, token: MockFixture
 ) -> None:
     """Should return No Content."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "photo_service.adapters.photos_adapter.PhotosAdapter.get_photo_by_id",
-        return_value={"id": ID, "name": "Oslo Skagen Sprint"},
+        return_value={"id": id, "name": "Oslo Skagen Sprint"},
     )
     mocker.patch(
         "photo_service.adapters.photos_adapter.PhotosAdapter.delete_photo",
-        return_value=ID,
+        return_value=id,
     )
     headers = {
         hdrs.AUTHORIZATION: f"Bearer {token}",
@@ -375,7 +375,7 @@ async def test_delete_photo_by_id(
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
 
-        resp = await client.delete(f"/photos/{ID}", headers=headers)
+        resp = await client.delete(f"/photos/{id}", headers=headers)
         assert resp.status == 204
 
 
@@ -388,14 +388,14 @@ async def test_create_photo_missing_mandatory_property(
     client: _TestClient, mocker: MockFixture, token: MockFixture
 ) -> None:
     """Should return 422 HTTPUnprocessableEntity."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "photo_service.services.photos_service.create_id",
-        return_value=ID,
+        return_value=id,
     )
     mocker.patch(
         "photo_service.adapters.photos_adapter.PhotosAdapter.create_photo",
-        return_value=ID,
+        return_value=id,
     )
     request_body = {"optional_property": "Optional_property"}
     headers = {
@@ -414,16 +414,16 @@ async def test_create_photo_with_input_id(
     client: _TestClient, mocker: MockFixture, token: MockFixture
 ) -> None:
     """Should return 422 HTTPUnprocessableEntity."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "photo_service.services.photos_service.create_id",
-        return_value=ID,
+        return_value=id,
     )
     mocker.patch(
         "photo_service.adapters.photos_adapter.PhotosAdapter.create_photo",
-        return_value=ID,
+        return_value=id,
     )
-    request_body = {"id": ID, "name": "Oslo Skagen sprint Oppdatert"}
+    request_body = {"id": id, "name": "Oslo Skagen sprint Oppdatert"}
     headers = {
         hdrs.CONTENT_TYPE: "application/json",
         hdrs.AUTHORIZATION: f"Bearer {token}",
@@ -465,26 +465,26 @@ async def test_update_photo_by_id_missing_mandatory_property(
     client: _TestClient, mocker: MockFixture, token: MockFixture
 ) -> None:
     """Should return 422 HTTPUnprocessableEntity."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "photo_service.adapters.photos_adapter.PhotosAdapter.get_photo_by_id",
-        return_value={"id": ID, "name": "Oslo Skagen Sprint"},
+        return_value={"id": id, "name": "Oslo Skagen Sprint"},
     )
     mocker.patch(
         "photo_service.adapters.photos_adapter.PhotosAdapter.update_photo",
-        return_value=ID,
+        return_value=id,
     )
 
     headers = {
         hdrs.CONTENT_TYPE: "application/json",
         hdrs.AUTHORIZATION: f"Bearer {token}",
     }
-    request_body = {"id": ID, "optional_property": "Optional_property"}
+    request_body = {"id": id, "optional_property": "Optional_property"}
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
 
-        resp = await client.put(f"/photos/{ID}", headers=headers, json=request_body)
+        resp = await client.put(f"/photos/{id}", headers=headers, json=request_body)
         assert resp.status == 422
 
 
@@ -493,14 +493,14 @@ async def test_update_photo_by_id_different_id_in_body(
     client: _TestClient, mocker: MockFixture, token: MockFixture
 ) -> None:
     """Should return 422 HTTPUnprocessableEntity."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "photo_service.adapters.photos_adapter.PhotosAdapter.get_photo_by_id",
-        return_value={"id": ID, "name": "Oslo Skagen Sprint"},
+        return_value={"id": id, "name": "Oslo Skagen Sprint"},
     )
     mocker.patch(
         "photo_service.adapters.photos_adapter.PhotosAdapter.update_photo",
-        return_value=ID,
+        return_value=id,
     )
 
     headers = {
@@ -512,7 +512,7 @@ async def test_update_photo_by_id_different_id_in_body(
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
 
-        resp = await client.put(f"/photos/{ID}", headers=headers, json=request_body)
+        resp = await client.put(f"/photos/{id}", headers=headers, json=request_body)
         assert resp.status == 422
 
 
@@ -524,14 +524,14 @@ async def test_create_photo_no_authorization(
     client: _TestClient, mocker: MockFixture
 ) -> None:
     """Should return 401 Unauthorized."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "photo_service.services.photos_service.create_id",
-        return_value=ID,
+        return_value=id,
     )
     mocker.patch(
         "photo_service.adapters.photos_adapter.PhotosAdapter.create_photo",
-        return_value=ID,
+        return_value=id,
     )
 
     request_body = {"name": "Oslo Skagen sprint"}
@@ -549,26 +549,26 @@ async def test_update_photo_by_id_no_authorization(
     client: _TestClient, mocker: MockFixture
 ) -> None:
     """Should return 401 Unauthorized."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "photo_service.adapters.photos_adapter.PhotosAdapter.get_photo_by_id",
-        return_value={"id": ID, "name": "Oslo Skagen Sprint"},
+        return_value={"id": id, "name": "Oslo Skagen Sprint"},
     )
     mocker.patch(
         "photo_service.adapters.photos_adapter.PhotosAdapter.update_photo",
-        return_value=ID,
+        return_value=id,
     )
 
     headers = {
         hdrs.CONTENT_TYPE: "application/json",
     }
 
-    request_body = {"id": ID, "name": "Oslo Skagen sprint Oppdatert"}
+    request_body = {"id": id, "name": "Oslo Skagen sprint Oppdatert"}
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=401)
 
-        resp = await client.put(f"/photos/{ID}", headers=headers, json=request_body)
+        resp = await client.put(f"/photos/{id}", headers=headers, json=request_body)
         assert resp.status == 401
 
 
@@ -577,16 +577,16 @@ async def test_delete_photo_by_id_no_authorization(
     client: _TestClient, mocker: MockFixture
 ) -> None:
     """Should return 401 Unauthorized."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "photo_service.adapters.photos_adapter.PhotosAdapter.delete_photo",
-        return_value=ID,
+        return_value=id,
     )
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=401)
 
-        resp = await client.delete(f"/photos/{ID}")
+        resp = await client.delete(f"/photos/{id}")
         assert resp.status == 401
 
 
@@ -596,14 +596,14 @@ async def test_create_photo_insufficient_role(
     client: _TestClient, mocker: MockFixture, token_unsufficient_role: MockFixture
 ) -> None:
     """Should return 403 Forbidden."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "photo_service.services.photos_service.create_id",
-        return_value=ID,
+        return_value=id,
     )
     mocker.patch(
         "photo_service.adapters.photos_adapter.PhotosAdapter.create_photo",
-        return_value=ID,
+        return_value=id,
     )
     request_body = {"name": "Oslo Skagen sprint"}
     headers = {
@@ -625,7 +625,7 @@ async def test_get_photo_not_found(
     client: _TestClient, mocker: MockFixture, token: MockFixture
 ) -> None:
     """Should return 404 Not found."""
-    ID = "does-not-exist"
+    id = "does-not-exist"
     mocker.patch(
         "photo_service.adapters.photos_adapter.PhotosAdapter.get_photo_by_id",
         return_value=None,
@@ -634,7 +634,7 @@ async def test_get_photo_not_found(
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
 
-        resp = await client.get(f"/photos/{ID}")
+        resp = await client.get(f"/photos/{id}")
         assert resp.status == 404
 
 
@@ -643,7 +643,7 @@ async def test_update_photo_not_found(
     client: _TestClient, mocker: MockFixture, token: MockFixture
 ) -> None:
     """Should return 404 Not found."""
-    ID = "does-not-exist"
+    id = "does-not-exist"
     mocker.patch(
         "photo_service.adapters.photos_adapter.PhotosAdapter.get_photo_by_id",
         return_value=None,
@@ -662,10 +662,10 @@ async def test_update_photo_not_found(
         "name": "Oslo Skagen sprint Oppdatert",
     }
 
-    ID = "does-not-exist"
+    id = "does-not-exist"
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
-        resp = await client.put(f"/photos/{ID}", headers=headers, json=request_body)
+        resp = await client.put(f"/photos/{id}", headers=headers, json=request_body)
         assert resp.status == 404
 
 
@@ -674,7 +674,7 @@ async def test_delete_photo_not_found(
     client: _TestClient, mocker: MockFixture, token: MockFixture
 ) -> None:
     """Should return 404 Not found."""
-    ID = "does-not-exist"
+    id = "does-not-exist"
     mocker.patch(
         "photo_service.adapters.photos_adapter.PhotosAdapter.get_photo_by_id",
         return_value=None,
@@ -689,5 +689,5 @@ async def test_delete_photo_not_found(
     }
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
-        resp = await client.delete(f"/photos/{ID}", headers=headers)
+        resp = await client.delete(f"/photos/{id}", headers=headers)
         assert resp.status == 404

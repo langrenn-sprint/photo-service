@@ -80,7 +80,7 @@ async def album() -> dict:
 
 
 @pytest.mark.contract
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="module")
 async def test_create_album(
     http_service: Any,
     token: MockFixture,
@@ -104,7 +104,7 @@ async def test_create_album(
 
 
 @pytest.mark.contract
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="module")
 async def test_get_all_albums(http_service: Any, token: MockFixture) -> None:
     """Should return OK and a list of albums as json."""
     url = f"{http_service}/albums"
@@ -121,7 +121,7 @@ async def test_get_all_albums(http_service: Any, token: MockFixture) -> None:
 
 
 @pytest.mark.contract
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="module")
 async def test_get_album_by_id(
     http_service: Any, token: MockFixture, album: dict
 ) -> None:
@@ -144,7 +144,7 @@ async def test_get_album_by_id(
 
 
 @pytest.mark.contract
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="module")
 async def test_update_album(http_service: Any, token: MockFixture, album: dict) -> None:
     """Should return No Content."""
     url = f"{http_service}/albums"
@@ -177,7 +177,7 @@ async def test_update_album(http_service: Any, token: MockFixture, album: dict) 
 
 
 @pytest.mark.contract
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="module")
 async def test_delete_album(http_service: Any, token: MockFixture) -> None:
     """Should return No Content."""
     url = f"{http_service}/albums"
