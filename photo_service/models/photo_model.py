@@ -14,6 +14,7 @@ class Photo(DataClassJsonMixin):
     is_photo_finish: bool = False
     is_start_registration: bool = False
     starred: bool = False
+    confidence: int = 0
     event_id: Optional[str] = field(default=None)
     creation_time: Optional[time] = field(default=None)
     information: Optional[str] = field(default=None)
