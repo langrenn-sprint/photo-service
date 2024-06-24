@@ -10,11 +10,13 @@ import motor.motor_asyncio
 from .views import (
     AlbumsView,
     AlbumView,
+    ConfigView,
     GooglePhotosView,
     PhotosView,
     PhotoView,
     Ping,
     Ready,
+    StatusView,
 )
 
 
@@ -43,12 +45,14 @@ async def create_app() -> web.Application:
         [
             web.view("/albums", AlbumsView),
             web.view("/albums/{albumId}", AlbumView),
+            web.view("/config", ConfigView),
             web.view("/g_photos", GooglePhotosView),
             web.view("/g_photos/{albumId}", GooglePhotosView),
             web.view("/ping", Ping),
             web.view("/ready", Ready),
             web.view("/photos", PhotosView),
             web.view("/photos/{photoId}", PhotoView),
+            web.view("/status", StatusView),
         ]
     )
 
