@@ -32,10 +32,18 @@ class StatusView(View):
     async def get(self) -> Response:
         """Get route function."""
         db = self.request.app["db"]
-        type = self.request.rel_url.query["type"]
+        status = []
         event_id = self.request.rel_url.query["event_id"]
+        try:
+            count = int(self.request.rel_url.query["count"])
+        except Exception:
+            count = 25  # default value.
+        try:
+            type = self.request.rel_url.query["type"]
+            status = await StatusAdapter.get_status_by_type(db, event_id, type, count)
+        except Exception:
+            status = await StatusAdapter.get_status(db, event_id, count)
 
-        status = await StatusAdapter.get_status(db, type, event_id)
         body = json.dumps(status)
         return Response(status=200, body=body, content_type="application/json")
 

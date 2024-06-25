@@ -57,7 +57,7 @@ class ConfigView(View):
             raise HTTPUnprocessableEntity(reason=str(e)) from e
         if config_id:
             logging.debug(f"inserted document with config_id {config_id}")
-            headers = MultiDict([(hdrs.LOCATION, f"{BASE_URL}/configs/{config_id}")])
+            headers = MultiDict([(hdrs.LOCATION, f"{BASE_URL}/config/{config_id}")])
 
             return Response(status=201, headers=headers)
         raise HTTPBadRequest() from None

@@ -1,25 +1,60 @@
 """Module for status adapter."""
 from typing import Any, List, Optional
+import uuid
 
+from photo_service.services.exceptions import IllegalValueException
 from .adapter import Adapter
 
 
+def create_id() -> str:  # pragma: no cover
+    """Creates an uuid."""
+    return str(uuid.uuid4())
+
+
 class StatusAdapter(Adapter):
-    """Class representing an adapter for sync-ed status."""
+    """Class representing an adapter for status messages."""
 
     @classmethod
-    async def create_status(cls: Any, db: Any, status: dict) -> str:  # pragma: no cover
+    async def create_status(
+        cls: Any, db: Any, status: dict
+    ) -> Optional[str]:  # pragma: no cover
         """Create status function."""
+        # Validation:
+        if "id" in status.keys():
+            raise IllegalValueException("Cannot create status with input id.") from None
+        # create id and insert
+        status["id"] = create_id()
         result = await db.status_collection.insert_one(status)
-        return result
+        if result:
+            return status["id"]
+        return None
 
     @classmethod
     async def get_status(
-        cls: Any, db: Any, event_id: str, status_type: str
+        cls: Any, db: Any, event_id: str, count: int
     ) -> List:  # pragma: no cover
-        """Get all status function."""
+        """Get latest status function."""
         status: List = []
-        cursor = db.status_collection.find({"type": status_type, "event_id": event_id})
+        cursor = (
+            db.status_collection.find({"event_id": event_id})
+            .sort("time", -1)
+            .limit(count)
+        )
+        for status in await cursor.to_list(None):
+            status.append(status)
+        return status
+
+    @classmethod
+    async def get_status_by_type(
+        cls: Any, db: Any, event_id: str, status_type: str, count: int
+    ) -> List:  # pragma: no cover
+        """Get latest status function."""
+        status: List = []
+        cursor = (
+            db.status_collection.find({"type": status_type, "event_id": event_id})
+            .sort("time", -1)
+            .limit(count)
+        )
         for status in await cursor.to_list(None):
             status.append(status)
         return status

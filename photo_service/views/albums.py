@@ -30,7 +30,7 @@ BASE_URL = f"http://{HOST_SERVER}:{HOST_PORT}"
 
 
 class AlbumsView(View):
-    """Class representing albums resource."""
+    """Class representing album resource."""
 
     async def get(self) -> Response:
         """Get route function."""
