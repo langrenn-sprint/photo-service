@@ -103,3 +103,19 @@ class ConfigView(View):
         except IllegalValueException as e:
             raise HTTPNotFound(reason=str(e)) from e
         return Response(status=204)
+
+
+class ConfigsView(View):
+    """Class representing configs resource."""
+
+    async def get(self) -> Response:
+        """Get route function."""
+        db = self.request.app["db"]
+        try:
+            event_id = self.request.rel_url.query["event_id"]
+            config = await ConfigAdapter.get_all_configs_by_event(db, event_id)
+        except KeyError:
+            config = await ConfigAdapter.get_all_configs(db)
+
+        body = json.dumps(config)
+        return Response(status=200, body=body, content_type="application/json")

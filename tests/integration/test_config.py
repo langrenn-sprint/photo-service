@@ -90,6 +90,55 @@ async def test_get_config_by_key(
         assert body["value"] == value
 
 
+@pytest.mark.integration
+async def test_get_all_configs(
+    client: _TestClient, mocker: MockFixture, token: MockFixture, config: dict
+) -> None:
+    """Should return OK, and a body containing list with one config."""
+    value = "2024 Ragde-sprinten"
+    list_config = []
+    list_config.append(config)
+
+    mocker.patch(
+        "photo_service.adapters.config_adapter.ConfigAdapter.get_all_configs",
+        return_value=list_config,  # type: ignore
+    )
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.get("/configs")
+        assert resp.status == 200
+        assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
+        body = await resp.json()
+        assert type(body) is list
+        assert body[0]["value"] == value
+
+
+@pytest.mark.integration
+async def test_get_all_configs_by_event(
+    client: _TestClient, mocker: MockFixture, token: MockFixture, config: dict
+) -> None:
+    """Should return OK, and a body containing list with one config."""
+    event_id = "1e95458c-e000-4d8b-beda-f860c77fd758"
+    value = "2024 Ragde-sprinten"
+    list_config = []
+    list_config.append(config)
+
+    mocker.patch(
+        "photo_service.adapters.config_adapter.ConfigAdapter.get_all_configs_by_event",
+        return_value=list_config,  # type: ignore
+    )
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.get(f"/configs?&event_id={event_id}")
+        assert resp.status == 200
+        assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
+        body = await resp.json()
+        assert type(body) is list
+        assert body[0]["value"] == value
+
+
 # Bad cases
 
 

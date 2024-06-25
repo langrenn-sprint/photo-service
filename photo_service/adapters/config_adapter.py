@@ -14,6 +14,20 @@ class ConfigAdapter(Adapter):
         return result
 
     @classmethod
+    async def get_all_configs(cls: Any, db: Any) -> list:  # pragma: no cover
+        """Get config function."""
+        result = await db.config_collection.find()
+        return result
+
+    @classmethod
+    async def get_all_configs_by_event(
+        cls: Any, db: Any, event_id: str
+    ) -> list:  # pragma: no cover
+        """Get config function."""
+        result = await db.config_collection.find({"event_id": event_id})
+        return result
+
+    @classmethod
     async def get_config_by_key(
         cls: Any, db: Any, event_id: str, key: str
     ) -> dict:  # pragma: no cover
