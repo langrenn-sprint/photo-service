@@ -1,5 +1,5 @@
 """Module for config adapter."""
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 from .adapter import Adapter
 
@@ -15,17 +15,23 @@ class ConfigAdapter(Adapter):
 
     @classmethod
     async def get_all_configs(cls: Any, db: Any) -> list:  # pragma: no cover
-        """Get config function."""
-        result = await db.config_collection.find()
-        return result
+        """Get configs function."""
+        configs: List = []
+        cursor = db.config_collection.find()
+        for config in await cursor.to_list(None):
+            configs.append(config)
+        return configs
 
     @classmethod
     async def get_all_configs_by_event(
         cls: Any, db: Any, event_id: str
     ) -> list:  # pragma: no cover
-        """Get config function."""
-        result = await db.config_collection.find({"event_id": event_id})
-        return result
+        """Get configs function."""
+        configs: List = []
+        cursor = db.config_collection.find({"event_id": event_id})
+        for config in await cursor.to_list(None):
+            configs.append(config)
+        return configs
 
     @classmethod
     async def get_config_by_key(

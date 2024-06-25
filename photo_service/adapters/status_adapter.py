@@ -34,30 +34,30 @@ class StatusAdapter(Adapter):
         cls: Any, db: Any, event_id: str, count: int
     ) -> List:  # pragma: no cover
         """Get latest status function."""
-        status: List = []
+        statuses: List = []
         cursor = (
             db.status_collection.find({"event_id": event_id})
             .sort("time", -1)
             .limit(count)
         )
         for status in await cursor.to_list(None):
-            status.append(status)
-        return status
+            statuses.append(status)
+        return statuses
 
     @classmethod
     async def get_status_by_type(
         cls: Any, db: Any, event_id: str, status_type: str, count: int
     ) -> List:  # pragma: no cover
         """Get latest status function."""
-        status: List = []
+        statuses: List = []
         cursor = (
             db.status_collection.find({"type": status_type, "event_id": event_id})
             .sort("time", -1)
             .limit(count)
         )
         for status in await cursor.to_list(None):
-            status.append(status)
-        return status
+            statuses.append(status)
+        return statuses
 
     @classmethod
     async def delete_status(
