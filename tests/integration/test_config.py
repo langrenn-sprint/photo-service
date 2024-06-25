@@ -90,30 +90,6 @@ async def test_get_config_by_key(
         assert body["value"] == value
 
 
-@pytest.mark.integration
-async def test_get_config_by_key(
-    client: _TestClient, mocker: MockFixture, token: MockFixture, config: dict
-) -> None:
-    """Should return OK, and a body containing one config."""
-    key = "video_config"
-    event_id = "1e95458c-e000-4d8b-beda-f860c77fd758"
-    value = "2024 Ragde-sprinten"
-
-    mocker.patch(
-        "photo_service.adapters.config_adapter.ConfigAdapter.get_config_by_key",
-        return_value=config,  # type: ignore
-    )
-
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
-        resp = await client.get(f"/config?count=25&event_id={event_id}&key={key}")
-        assert resp.status == 200
-        assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
-        body = await resp.json()
-        assert type(body) is dict
-        assert body["value"] == value
-
-
 # Bad cases
 
 

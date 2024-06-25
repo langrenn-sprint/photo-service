@@ -1,5 +1,5 @@
 """Module for config adapter."""
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 from .adapter import Adapter
 
@@ -18,9 +18,7 @@ class ConfigAdapter(Adapter):
         cls: Any, db: Any, event_id: str, key: str
     ) -> dict:  # pragma: no cover
         """Get config function."""
-        result = await db.config_collection.find_one(
-            {"key": key, "event_id": event_id}
-        )
+        result = await db.config_collection.find_one({"key": key, "event_id": event_id})
         return result
 
     @classmethod
