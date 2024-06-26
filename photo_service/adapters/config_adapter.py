@@ -14,7 +14,7 @@ class ConfigAdapter(Adapter):
         return result
 
     @classmethod
-    async def get_all_configs(cls: Any, db: Any) -> list:  # pragma: no cover
+    async def get_all_configs(cls: Any, db: Any) -> List[dict]:  # pragma: no cover
         """Get configs function."""
         configs: List = []
         cursor = db.config_collection.find()
@@ -25,7 +25,7 @@ class ConfigAdapter(Adapter):
     @classmethod
     async def get_all_configs_by_event(
         cls: Any, db: Any, event_id: str
-    ) -> list:  # pragma: no cover
+    ) -> List[dict]:  # pragma: no cover
         """Get configs function."""
         configs: List = []
         cursor = db.config_collection.find({"event_id": event_id})
@@ -38,7 +38,9 @@ class ConfigAdapter(Adapter):
         cls: Any, db: Any, event_id: str, key: str
     ) -> dict:  # pragma: no cover
         """Get config function."""
-        result = await db.config_collection.find_one({"key": key, "event_id": event_id})
+        result = await db.config_collection.find_one(
+            {"$and": [{"event_id": event_id}, {"key": key}]}
+        )
         return result
 
     @classmethod
