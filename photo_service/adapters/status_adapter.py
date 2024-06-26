@@ -32,7 +32,7 @@ class StatusAdapter(Adapter):
     @classmethod
     async def get_status(
         cls: Any, db: Any, event_id: str, count: int
-    ) -> List:  # pragma: no cover
+    ) -> List[dict]:  # pragma: no cover
         """Get latest status function."""
         statuses: List = []
         cursor = (
@@ -47,7 +47,7 @@ class StatusAdapter(Adapter):
     @classmethod
     async def get_status_by_type(
         cls: Any, db: Any, event_id: str, status_type: str, count: int
-    ) -> List:  # pragma: no cover
+    ) -> List[dict]:  # pragma: no cover
         """Get latest status function."""
         statuses: List = []
         cursor = (

@@ -1,7 +1,14 @@
 """Module for config adapter."""
 from typing import Any, List, Optional
+import uuid
 
+from photo_service.services.exceptions import IllegalValueException
 from .adapter import Adapter
+
+
+def create_id() -> str:  # pragma: no cover
+    """Creates an uuid."""
+    return str(uuid.uuid4())
 
 
 class ConfigAdapter(Adapter):
@@ -10,6 +17,11 @@ class ConfigAdapter(Adapter):
     @classmethod
     async def create_config(cls: Any, db: Any, config: dict) -> str:  # pragma: no cover
         """Create config function."""
+        # Validation:
+        if "id" in config.keys():
+            raise IllegalValueException("Cannot create status with input id.") from None
+        # create id and insert
+        config["id"] = create_id()
         result = await db.config_collection.insert_one(config)
         return result
 
