@@ -2,7 +2,6 @@
 from typing import Any, List, Optional
 import uuid
 
-from photo_service.services.exceptions import IllegalValueException
 from .adapter import Adapter
 
 
@@ -19,7 +18,7 @@ class ConfigAdapter(Adapter):
         """Create config function."""
         # Validation:
         if "id" in config.keys():
-            raise IllegalValueException("Cannot create status with input id.") from None
+            raise Exception("Cannot create status with input id.") from None
         # create id and insert
         config["id"] = create_id()
         result = await db.config_collection.insert_one(config)

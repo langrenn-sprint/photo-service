@@ -2,7 +2,6 @@
 from typing import Any, List, Optional
 import uuid
 
-from photo_service.services.exceptions import IllegalValueException
 from .adapter import Adapter
 
 
@@ -21,7 +20,7 @@ class StatusAdapter(Adapter):
         """Create status function."""
         # Validation:
         if "id" in status.keys():
-            raise IllegalValueException("Cannot create status with input id.") from None
+            raise Exception("Cannot create status with input id.") from None
         # create id and insert
         status["id"] = create_id()
         result = await db.status_collection.insert_one(status)
