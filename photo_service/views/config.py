@@ -33,7 +33,7 @@ class ConfigView(View):
         """Get route function."""
         db = self.request.app["db"]
         key = self.request.rel_url.query["key"]
-        event_id = self.request.rel_url.query["event_id"]
+        event_id = self.request.rel_url.query["eventId"]
 
         config = await ConfigAdapter.get_config_by_key(db, event_id, key)
         body = json.dumps(config)
@@ -74,7 +74,7 @@ class ConfigView(View):
         body = await self.request.json()
 
         current_config = await ConfigAdapter.get_config_by_key(
-            db, body["event_id"], body["key"]
+            db, body["eventId"], body["key"]
         )
         if not current_config:
             raise HTTPNotFound(reason="Config not found")
@@ -111,11 +111,11 @@ class ConfigsView(View):
     async def get(self) -> Response:
         """Get route function."""
         db = self.request.app["db"]
-        try:
-            event_id = self.request.rel_url.query["event_id"]
-            config = await ConfigAdapter.get_all_configs_by_event(db, event_id)
-        except KeyError:
-            config = await ConfigAdapter.get_all_configs(db)
+        if "eventId" in self.request.rel_url.query:
+            event_id = self.request.rel_url.query["eventId"]
+            result = await ConfigAdapter.get_all_configs_by_event(db, event_id)
+        else:
+            result = await ConfigAdapter.get_all_configs(db)
 
-        body = json.dumps(config)
+        body = json.dumps(result)
         return Response(status=200, body=body, content_type="application/json")

@@ -82,7 +82,7 @@ async def test_get_config_by_key(
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
-        resp = await client.get(f"/config?count=25&event_id={event_id}&key={key}")
+        resp = await client.get(f"/config?count=25&eventId={event_id}&key={key}")
         assert resp.status == 200
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
         body = await resp.json()
@@ -131,7 +131,7 @@ async def test_get_all_configs_by_event(
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
-        resp = await client.get(f"/configs?&event_id={event_id}")
+        resp = await client.get(f"/configs?&eventId={event_id}")
         assert resp.status == 200
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
         body = await resp.json()
