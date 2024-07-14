@@ -48,6 +48,10 @@ async def test_create_config(
     """Should return Created, location header."""
     ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
+        "photo_service.services.config_service.create_id",
+        return_value=ID,
+    )
+    mocker.patch(
         "photo_service.adapters.config_adapter.ConfigAdapter.create_config",
         return_value=ID,
     )
@@ -147,7 +151,7 @@ async def test_get_all_configs_by_event(
 async def test_create_config_adapter_fails(
     client: _TestClient, mocker: MockFixture, token: MockFixture
 ) -> None:
-    """Should return 400 HTTPBadRequest."""
+    """Should return 422."""
     mocker.patch(
         "photo_service.adapters.config_adapter.ConfigAdapter.create_config",
         return_value=None,
@@ -161,7 +165,7 @@ async def test_create_config_adapter_fails(
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
         resp = await client.post("/config", headers=headers, json=request_body)
-        assert resp.status == 400
+        assert resp.status == 422
 
 
 @pytest.mark.integration

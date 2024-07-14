@@ -29,16 +29,14 @@ def token_unsufficient_role() -> str:
 
 
 @pytest.fixture
-async def status() -> list:
+async def status() -> dict:
     """An status object for testing."""
-    return [
-        {
-            "event_id": "1e95458c-e000-4d8b-beda-f860c77fd758",
-            "time": "2022-09-25T16:41:52",
-            "type": "video_status",
-            "message": "2022 Ragde-sprinten",
-        }
-    ]
+    return {
+        "event_id": "1e95458c-e000-4d8b-beda-f860c77fd758",
+        "time": "2022-09-25T16:41:52",
+        "type": "video_status",
+        "message": "2022 Ragde-sprinten",
+    }
 
 
 @pytest.mark.integration
@@ -50,6 +48,10 @@ async def test_create_status(
 ) -> None:
     """Should return Created, location header."""
     ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "photo_service.services.status_service.create_id",
+        return_value=ID,
+    )
     mocker.patch(
         "photo_service.adapters.status_adapter.StatusAdapter.create_status",
         return_value=ID,
@@ -70,29 +72,78 @@ async def test_create_status(
 
 
 @pytest.mark.integration
-async def test_get_status_by_type(
-    client: _TestClient, mocker: MockFixture, token: MockFixture, status: list
+async def test_get_all_status(
+    client: _TestClient, mocker: MockFixture, token: MockFixture, status: dict
 ) -> None:
     """Should return OK, and a body containing one status."""
-    status_type = "video_status"
-    event_id = "1e95458c-e000-4d8b-beda-f860c77fd758"
-    time = "2022-09-25T16:41:52"
+    status_list = []
+    status_list.append(status)
+    event_id = status["event_id"]
 
     mocker.patch(
-        "photo_service.adapters.status_adapter.StatusAdapter.get_status_by_type",
-        return_value=status,  # type: ignore
+        "photo_service.adapters.status_adapter.StatusAdapter.get_all_status",
+        return_value=status_list,  # type: ignore
+    )
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.get(f"/status?count=25&eventId={event_id}")
+        assert resp.status == 200
+        assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
+        body = await resp.json()
+        assert type(body) is list
+        assert body[0]["time"] == status["time"]
+
+
+@pytest.mark.integration
+async def test_get_all_status_by_type(
+    client: _TestClient, mocker: MockFixture, token: MockFixture, status: dict
+) -> None:
+    """Should return OK, and a body containing one status."""
+    status_list = []
+    status_list.append(status)
+    status_type = "video_status"
+    event_id = status["event_id"]
+
+    mocker.patch(
+        "photo_service.adapters.status_adapter.StatusAdapter.get_all_status_by_type",
+        return_value=status_list,  # type: ignore
     )
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
         resp = await client.get(
-            f"/status?count=25&event_id={event_id}&type={status_type}"
+            f"/status?count=25&eventId={event_id}&type={status_type}"
         )
         assert resp.status == 200
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
         body = await resp.json()
         assert type(body) is list
-        assert body[0]["time"] == time
+        assert body[0]["time"] == status["time"]
+
+
+@pytest.mark.integration
+async def test_get_all_status_no_limit(
+    client: _TestClient, mocker: MockFixture, token: MockFixture, status: dict
+) -> None:
+    """Should return OK, and a body containing one status."""
+    status_list = []
+    status_list.append(status)
+    event_id = status["event_id"]
+
+    mocker.patch(
+        "photo_service.adapters.status_adapter.StatusAdapter.get_all_status",
+        return_value=status_list,  # type: ignore
+    )
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.get(f"/status?eventId={event_id}")
+        assert resp.status == 200
+        assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
+        body = await resp.json()
+        assert type(body) is list
+        assert body[0]["time"] == status["time"]
 
 
 # Bad cases
@@ -103,7 +154,7 @@ async def test_get_status_by_type(
 async def test_create_status_adapter_fails(
     client: _TestClient, mocker: MockFixture, token: MockFixture
 ) -> None:
-    """Should return 400 HTTPBadRequest."""
+    """Should return 422."""
     mocker.patch(
         "photo_service.adapters.status_adapter.StatusAdapter.create_status",
         return_value=None,
@@ -117,7 +168,7 @@ async def test_create_status_adapter_fails(
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
         resp = await client.post("/status", headers=headers, json=request_body)
-        assert resp.status == 400
+        assert resp.status == 422
 
 
 @pytest.mark.integration
