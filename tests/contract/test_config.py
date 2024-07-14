@@ -118,14 +118,12 @@ async def test_get_config_by_key(
     http_service: Any, token: MockFixture, config: dict
 ) -> None:
     """Should return OK and an config as json."""
-    url = f"{http_service}/config"
+    event_id = "1e95458c-e000-4d8b-beda-f860c77fd758"
+    key = "video_config"
+    value = "2024 Ragde-sprinten"
+    url = f"{url}?key={key}&event_id={event_id}"
 
     async with ClientSession() as session:
-        async with session.get(f"{url}s") as response:
-            configs = await response.json()
-        key = configs[0]["key"]
-        event_id = configs[0]["event_id"]
-        url = f"{url}?key={key}&event_id={event_id}"
         async with session.get(url) as response:
             body = await response.json()
 
