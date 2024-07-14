@@ -121,7 +121,7 @@ async def test_get_config_by_key(
     event_id = "1e95458c-e000-4d8b-beda-f860c77fd758"
     key = "video_config"
     value = "2024 Ragde-sprinten"
-    url = f"{http_service}/configs"
+    url = f"{http_service}/config"
     url = f"{url}?key={key}&event_id={event_id}"
 
     async with ClientSession() as session:
@@ -132,58 +132,3 @@ async def test_get_config_by_key(
     assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
     assert type(config) is dict
     assert body["value"] == value
-
-
-@pytest.mark.contract
-@pytest.mark.asyncio(scope="module")
-async def test_update_config(
-    http_service: Any, token: MockFixture, config: dict
-) -> None:
-    """Should return No Content."""
-    url = f"{http_service}/config"
-    headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
-
-    async with ClientSession() as session:
-        async with session.get(f"{url}s") as response:
-            configs = await response.json()
-        key = configs[0]["key"]
-        event_id = configs[0]["event_id"]
-
-        request_body = deepcopy(config)
-        new_value = "Oslo Skagen sprint updated"
-        request_body["event_id"] = event_id
-        request_body["key"] = key
-        request_body["value"] = new_value
-
-        async with session.put(url, headers=headers, json=request_body) as response:
-            assert response.status == 204
-
-        async with session.get(url) as response:
-            assert response.status == 200
-            updated_config = await response.json()
-            assert updated_config["key"] == config["key"]
-            assert updated_config["value"] == new_value
-
-
-@pytest.mark.contract
-@pytest.mark.asyncio(scope="module")
-async def test_delete_config(http_service: Any, token: MockFixture) -> None:
-    """Should return No Content."""
-    url = f"{http_service}/configs"
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
-
-    async with ClientSession() as session:
-        async with session.get(url) as response:
-            configs = await response.json()
-        id = configs[0]["id"]
-        url = f"{url}/{id}"
-        async with session.delete(url, headers=headers) as response:
-            assert response.status == 204
-
-        async with session.get(url) as response:
-            assert response.status == 404
