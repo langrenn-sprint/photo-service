@@ -60,8 +60,6 @@ paths:
       responses:
         201:
           description: Created
-
-
   /photos:
     post:
       tags:
@@ -149,6 +147,82 @@ paths:
       responses:
         204:
           description: No content
+  /config:
+    post:
+      tags:
+        - config
+      security:
+        - bearerAuth: []
+      description: Add a new config
+      requestBody:
+        description: The new config to be created
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Config"
+      responses:
+        201:
+          description: Created
+    get:
+      parameters:
+        - name: key
+          in: path
+          description: config key
+          required: true
+          schema:
+            type: string
+        - name: eventId
+          in: path
+          description: Id of event config applies to
+          required: true
+          schema:
+            type: string
+            format: uuid
+      description: Get a config
+      responses:
+        200:
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Config"
+    put:
+      tags:
+        - config
+      security:
+        - bearerAuth: []
+      description: Update a config with new value
+      responses:
+        204:
+          description: No content
+  /config/{id}:
+    delete:
+      tags:
+        - config
+      security:
+        - bearerAuth: []
+      description: Delete a config
+      responses:
+        204:
+          description: No content
+  /configs:
+    get:
+      parameters:
+        - name: eventId
+          in: path
+          description: Id of event config applies to
+          required: true
+          schema:
+            type: string
+            format: uuid
+      description: Get a config
+      responses:
+        200:
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfigCollection"
   securitySchemes:
     bearerAuth:
       type: http
