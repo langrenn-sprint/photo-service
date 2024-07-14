@@ -121,6 +121,7 @@ async def test_get_config_by_key(
     event_id = "1e95458c-e000-4d8b-beda-f860c77fd758"
     key = "video_config"
     value = "2024 Ragde-sprinten"
+    url = f"{http_service}/configs"
     url = f"{url}?key={key}&event_id={event_id}"
 
     async with ClientSession() as session:
@@ -130,7 +131,7 @@ async def test_get_config_by_key(
     assert response.status == 200
     assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
     assert type(config) is dict
-    assert body["key"] == key
+    assert body["value"] == value
 
 
 @pytest.mark.contract
