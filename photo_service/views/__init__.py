@@ -5,3 +5,4 @@ from .g_photos import GooglePhotosView
 from .liveness import Ping, Ready
 from .photos import PhotosView, PhotoView
 from .status import StatusView
+from .unit_test import UnitTestView

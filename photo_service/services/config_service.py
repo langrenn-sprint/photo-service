@@ -27,7 +27,7 @@ class ConfigService:
 
     @classmethod
     async def get_all_configs(
-        cls: Any, db: Any, event_id: Optional[str]
+        cls: Any, db: Any, event_id: Optional[str] = None
     ) -> List[Config]:
         """Get all config function."""
         config: List[Config] = []
@@ -56,6 +56,14 @@ class ConfigService:
         # Validation:
         if config.id:
             raise IllegalValueException("Cannot create config with input id.") from None
+        old_config = await ConfigAdapter.get_config_by_key(
+            db, config.event_id, config.key
+        )
+        if old_config:
+            raise IllegalValueException(
+                f"Config with key {config.key} already exists on event {config.event_id}"
+            ) from None
+
         # create id
         id = create_id()
         config.id = id

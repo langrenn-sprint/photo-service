@@ -34,7 +34,8 @@ Look to the [openAPI specification](./specification.yaml) for the details.
 Start the server locally:
 
 ```Shell
-% poetry run adev runserver -p 8080 --aux-port 8089 photo_service
+poetry run adev runserver -p 8080 --aux-port 8089 photo_service
+docker-compose up user-service mongodb
 ```
 
 ## Running the API in a wsgi-server (gunicorn)

@@ -18,6 +18,7 @@ from .views import (
     Ping,
     Ready,
     StatusView,
+    UnitTestView,
 )
 
 
@@ -55,6 +56,7 @@ async def create_app() -> web.Application:
             web.view("/photos", PhotosView),
             web.view("/photos/{photoId}", PhotoView),
             web.view("/status", StatusView),
+            web.view("/unit_test", UnitTestView),
         ]
     )
 

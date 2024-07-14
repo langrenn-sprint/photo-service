@@ -55,6 +55,10 @@ async def test_create_config(
         "photo_service.adapters.config_adapter.ConfigAdapter.create_config",
         return_value=ID,
     )
+    mocker.patch(
+        "photo_service.adapters.config_adapter.ConfigAdapter.get_config_by_key",
+        return_value={},  # type: ignore
+    )
 
     request_body = config
 
@@ -144,6 +148,39 @@ async def test_get_all_configs_by_event(
 
 
 # Bad cases
+@pytest.mark.integration
+async def test_create_config_key_exists(
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    config: dict,
+) -> None:
+    """Should return Created, location header."""
+    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "photo_service.services.config_service.create_id",
+        return_value=ID,
+    )
+    mocker.patch(
+        "photo_service.adapters.config_adapter.ConfigAdapter.create_config",
+        return_value=ID,
+    )
+    mocker.patch(
+        "photo_service.adapters.config_adapter.ConfigAdapter.get_config_by_key",
+        return_value=config,  # type: ignore
+    )
+
+    request_body = config
+
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.post("/config", headers=headers, json=request_body)
+        assert resp.status == 422
 
 
 # Mandatory properties missing at create and update:
