@@ -107,7 +107,7 @@ class ConfigView(View):
         except Exception as e:
             raise e from e
 
-        config_id = self.request.match_info["id"]
+        config_id = self.request.match_info["configId"]
         logging.debug(f"Got delete request for config {config_id}")
 
         try:
