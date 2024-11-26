@@ -1,4 +1,5 @@
 """Module for google photos adapter."""
+
 import logging
 import os
 from typing import Any, Optional

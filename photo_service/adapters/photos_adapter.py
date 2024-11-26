@@ -1,4 +1,5 @@
 """Module for photo adapter."""
+
 from typing import Any, List, Optional
 
 from .adapter import Adapter
@@ -14,10 +15,12 @@ class PhotosAdapter(Adapter):
         return result
 
     @classmethod
-    async def get_all_photos(cls: Any, db: Any) -> List:  # pragma: no cover
+    async def get_all_photos(
+        cls: Any, db: Any, event_id: str
+    ) -> List:  # pragma: no cover
         """Get all photos function."""
         photos: List = []
-        cursor = db.photos_collection.find()
+        cursor = db.photos_collection.find({"event_id": event_id})
         for photo in await cursor.to_list(None):
             photos.append(photo)
         return photos
@@ -45,32 +48,49 @@ class PhotosAdapter(Adapter):
         return result
 
     @classmethod
+    async def get_photos_by_race_id(
+        cls: Any, db: Any, race_id: str
+    ) -> List:  # pragma: no cover
+        """Get all photos by race_id function."""
+        photos: List = []
+        cursor = db.photos_collection.find({"race_id": race_id})
+        for photo in await cursor.to_list(None):
+            photos.append(photo)
+        return photos
+
+    @classmethod
     async def get_photos_by_raceclass(
-        cls: Any, db: Any, raceclass: str
+        cls: Any, db: Any, event_id: str, raceclass: str
     ) -> List:  # pragma: no cover
         """Get all photos by raceclass function."""
         photos: List = []
-        cursor = db.photos_collection.find({"raceclass": raceclass})
+        cursor = db.photos_collection.find(
+            {"raceclass": raceclass, "event_id": event_id}
+        )
         for photo in await cursor.to_list(None):
             photos.append(photo)
         return photos
 
     @classmethod
     async def get_photos_starred_by_raceclass(
-        cls: Any, db: Any, raceclass: str
+        cls: Any, db: Any, event_id: str, raceclass: str
     ) -> List:  # pragma: no cover
         """Get all photos by raceclass function."""
         photos: List = []
-        cursor = db.photos_collection.find({"starred": True, "raceclass": raceclass})
+        cursor = db.photos_collection.find(
+            {"starred": True, "raceclass": raceclass, "event_id": event_id}
+        )
         for photo in await cursor.to_list(None):
             photos.append(photo)
         return photos
 
     @classmethod
-    async def get_photos_starred(cls: Any, db: Any) -> List:  # pragma: no cover
+    async def get_photos_starred(
+        cls: Any, db: Any, event_id: str
+    ) -> List:  # pragma: no cover
         """Get all photos by raceclass function."""
         photos: List = []
-        cursor = db.photos_collection.find({"starred": True})
+        cursor = db.photos_collection.find({"starred": True, "event_id": event_id})
         for photo in await cursor.to_list(None):
             photos.append(photo)
         return photos

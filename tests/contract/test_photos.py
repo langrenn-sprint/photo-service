@@ -1,4 +1,5 @@
 """Contract test cases for ping."""
+
 from copy import deepcopy
 import logging
 import os
@@ -130,7 +131,7 @@ async def test_get_photo_by_id(
     http_service: Any, token: MockFixture, photo: dict
 ) -> None:
     """Should return OK and an photo as json."""
-    url = f"{http_service}/photos"
+    url = f"{http_service}/photos?eventId=1e95458c-e000-4d8b-beda-f860c77fd758"
 
     async with ClientSession() as session:
         async with session.get(url) as response:

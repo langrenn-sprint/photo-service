@@ -1,4 +1,5 @@
 """Raceplan data class module."""
+
 from dataclasses import dataclass, field
 from datetime import datetime
 

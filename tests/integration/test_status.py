@@ -1,4 +1,5 @@
 """Integration test cases for the status route."""
+
 import os
 
 from aiohttp import hdrs

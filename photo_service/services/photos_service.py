@@ -1,4 +1,5 @@
 """Module for photos service."""
+
 import logging
 from typing import Any, List, Optional
 import uuid
@@ -26,10 +27,10 @@ class PhotosService:
     """Class representing a service for photos."""
 
     @classmethod
-    async def get_all_photos(cls: Any, db: Any) -> List[Photo]:
+    async def get_all_photos(cls: Any, db: Any, event_id: str) -> List[Photo]:
         """Get all photos function."""
         photos: List[Photo] = []
-        _photos = await PhotosAdapter.get_all_photos(db)
+        _photos = await PhotosAdapter.get_all_photos(db, event_id)
         for e in _photos:
             photos.append(Photo.from_dict(e))
         _s = sorted(
@@ -42,10 +43,28 @@ class PhotosService:
         return _s
 
     @classmethod
-    async def get_photos_by_raceclass(cls: Any, db: Any, raceclass: str) -> List[Photo]:
+    async def get_photos_by_race_id(cls: Any, db: Any, race_id: str) -> List[Photo]:
+        """Get all photos for one race function."""
+        photos: List[Photo] = []
+        _photos = await PhotosAdapter.get_photos_by_race_id(db, race_id)
+        for e in _photos:
+            photos.append(Photo.from_dict(e))
+        _s = sorted(
+            photos,
+            key=lambda k: (
+                k.creation_time is not None,
+                k.creation_time,
+            ),
+        )
+        return _s
+
+    @classmethod
+    async def get_photos_by_raceclass(
+        cls: Any, db: Any, event_id: str, raceclass: str
+    ) -> List[Photo]:
         """Get all photos for one raceclass function."""
         photos: List[Photo] = []
-        _photos = await PhotosAdapter.get_photos_by_raceclass(db, raceclass)
+        _photos = await PhotosAdapter.get_photos_by_raceclass(db, event_id, raceclass)
         for e in _photos:
             photos.append(Photo.from_dict(e))
         _s = sorted(
@@ -58,10 +77,10 @@ class PhotosService:
         return _s
 
     @classmethod
-    async def get_photos_starred(cls: Any, db: Any) -> List[Photo]:
+    async def get_photos_starred(cls: Any, db: Any, event_id: str) -> List[Photo]:
         """Get all photos by raceclass function."""
         photos: List[Photo] = []
-        _photos = await PhotosAdapter.get_photos_starred(db)
+        _photos = await PhotosAdapter.get_photos_starred(db, event_id)
         for e in _photos:
             photos.append(Photo.from_dict(e))
         _s = sorted(
@@ -75,11 +94,13 @@ class PhotosService:
 
     @classmethod
     async def get_photos_starred_by_raceclass(
-        cls: Any, db: Any, raceclass: str
+        cls: Any, db: Any, event_id: str, raceclass: str
     ) -> List[Photo]:
         """Get all photos by raceclass function."""
         photos: List[Photo] = []
-        _photos = await PhotosAdapter.get_photos_starred_by_raceclass(db, raceclass)
+        _photos = await PhotosAdapter.get_photos_starred_by_raceclass(
+            db, event_id, raceclass
+        )
         for e in _photos:
             photos.append(Photo.from_dict(e))
         _s = sorted(

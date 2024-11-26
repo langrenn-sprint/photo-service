@@ -1,4 +1,5 @@
 """Module for photo adapter."""
+
 from abc import ABC, abstractmethod
 from typing import Any, List, Optional
 
@@ -8,7 +9,9 @@ class Adapter(ABC):
 
     @classmethod
     @abstractmethod
-    async def get_all_photos(cls: Any, db: Any) -> List:  # pragma: no cover
+    async def get_all_photos(
+        cls: Any, db: Any, event_id: str
+    ) -> List:  # pragma: no cover
         """Get all photos function."""
         raise NotImplementedError() from None
 
@@ -29,7 +32,7 @@ class Adapter(ABC):
     async def update_photo(
         cls: Any, db: Any, id: str, photo: dict
     ) -> Optional[str]:  # pragma: no cover
-        """Get photo function."""
+        """Update photo function."""
         raise NotImplementedError() from None
 
     @classmethod

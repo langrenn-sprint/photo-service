@@ -1,4 +1,5 @@
 """Integration test cases for the photos route."""
+
 from copy import deepcopy
 import os
 
@@ -235,7 +236,7 @@ async def test_get_all_photos(
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
-        resp = await client.get("/photos")
+        resp = await client.get("/photos?eventId=1e95458c-e000-4d8b-beda-f860c77fd758")
         assert resp.status == 200
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
         photos = await resp.json()
@@ -284,7 +285,9 @@ async def test_get_number_of_photos(
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
-        resp = await client.get("/photos?limit=2")
+        resp = await client.get(
+            "/photos?eventId=1e95458c-e000-4d8b-beda-f860c77fd758&limit=2"
+        )
         assert resp.status == 200
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
         photos = await resp.json()
@@ -300,6 +303,7 @@ async def test_get_photos_by_raceclass(
 ) -> None:
     """Should return OK and a valid json body."""
     id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    event_id = "1e95458c-e000-4d8b-beda-f860c77fd758"
     raceclass = "K-Jr"
     mocker.patch(
         "photo_service.adapters.photos_adapter.PhotosAdapter.get_photos_by_raceclass",
@@ -315,7 +319,7 @@ async def test_get_photos_by_raceclass(
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
-        resp = await client.get(f"/photos?raceclass={raceclass}")
+        resp = await client.get(f"/photos?eventId={event_id}&raceclass={raceclass}")
         assert resp.status == 200
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
         photos = await resp.json()
@@ -325,11 +329,41 @@ async def test_get_photos_by_raceclass(
 
 
 @pytest.mark.integration
+async def test_get_photos_by_race_id(
+    client: _TestClient, mocker: MockFixture, token: MockFixture
+) -> None:
+    """Should return OK and a valid json body."""
+    id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    race_id = "1e95458c-e000-4d8b-beda-f860c77fd758"
+    mocker.patch(
+        "photo_service.adapters.photos_adapter.PhotosAdapter.get_photos_by_race_id",
+        return_value=[
+            {
+                "id": id,
+                "name": "Oslo Skagen Sprint",
+                "finish_line": False,
+                "race_id": race_id,
+            }
+        ],
+    )
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.get(f"/photos?raceId={race_id}")
+        assert resp.status == 200
+        assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
+        photos = await resp.json()
+        assert type(photos) is list
+        assert race_id == photos[0]["race_id"]
+
+
+@pytest.mark.integration
 async def test_get_starred_photos_by_raceclass(
     client: _TestClient, mocker: MockFixture, token: MockFixture
 ) -> None:
     """Should return OK and a valid json body."""
     id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    event_id = "1e95458c-e000-4d8b-beda-f860c77fd758"
     raceclass = "K-Jr"
     mocker.patch(
         "photo_service.adapters.photos_adapter.PhotosAdapter.get_photos_starred_by_raceclass",
@@ -346,7 +380,9 @@ async def test_get_starred_photos_by_raceclass(
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
-        resp = await client.get(f"/photos?raceclass={raceclass}&starred=true")
+        resp = await client.get(
+            f"/photos?event_id={event_id}&raceclass={raceclass}&starred=true"
+        )
         assert resp.status == 200
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
         photos = await resp.json()

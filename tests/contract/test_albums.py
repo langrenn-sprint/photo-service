@@ -1,4 +1,5 @@
 """Contract test cases for ping."""
+
 from copy import deepcopy
 import logging
 import os

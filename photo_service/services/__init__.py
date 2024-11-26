@@ -1,4 +1,5 @@
 """Package for all services."""
+
 from .albums_service import AlbumNotFoundException, AlbumsService
 from .config_service import ConfigNotFoundException, ConfigService
 from .exceptions import (

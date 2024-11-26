@@ -1,4 +1,5 @@
 """Integration test cases for the g_photos route."""
+
 import json
 import os
 

@@ -1,4 +1,5 @@
 """Module for users adapter."""
+
 import os
 from typing import Any, Optional
 

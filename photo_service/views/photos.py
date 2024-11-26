@@ -1,4 +1,5 @@
 """Resource module for photos resources."""
+
 import json
 import logging
 import os
@@ -35,6 +36,11 @@ class PhotosView(View):
     async def get(self) -> Response:
         """Get route function."""
         db = self.request.app["db"]
+        if "eventId" in self.request.rel_url.query:
+            event_id = self.request.rel_url.query["eventId"]
+        else:
+            event_id = ""
+
         if "gId" in self.request.rel_url.query:
             g_id = self.request.rel_url.query["gId"]
             photo = await PhotosService.get_photo_by_g_id(db, g_id)
@@ -52,15 +58,20 @@ class PhotosView(View):
                 raceclass = self.request.rel_url.query["raceclass"]
                 if starred:
                     photos = await PhotosService.get_photos_starred_by_raceclass(
-                        db, raceclass
+                        db, event_id, raceclass
                     )
                 else:
-                    photos = await PhotosService.get_photos_by_raceclass(db, raceclass)
+                    photos = await PhotosService.get_photos_by_raceclass(
+                        db, event_id, raceclass
+                    )
+            elif "raceId" in self.request.rel_url.query:
+                race_id = self.request.rel_url.query["raceId"]
+                photos = await PhotosService.get_photos_by_race_id(db, race_id)
             else:
                 if starred:
-                    photos = await PhotosService.get_photos_starred(db)
+                    photos = await PhotosService.get_photos_starred(db, event_id)
                 else:
-                    photos = await PhotosService.get_all_photos(db)
+                    photos = await PhotosService.get_all_photos(db, event_id)
             _list = []
             for _e in photos:
                 _list.append(_e.to_dict())

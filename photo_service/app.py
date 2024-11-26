@@ -1,4 +1,5 @@
 """Module for admin of photo service."""
+
 import logging
 import os
 from typing import Any

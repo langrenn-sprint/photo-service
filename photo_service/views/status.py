@@ -1,4 +1,5 @@
 """Resource module for status resources."""
+
 import json
 import logging
 import os

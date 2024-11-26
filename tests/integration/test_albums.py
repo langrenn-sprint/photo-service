@@ -1,4 +1,5 @@
 """Integration test cases for the albums route."""
+
 from copy import deepcopy
 import os
 

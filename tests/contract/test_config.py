@@ -1,4 +1,5 @@
 """Contract test cases for ping."""
+
 import logging
 import os
 from typing import Any, AsyncGenerator

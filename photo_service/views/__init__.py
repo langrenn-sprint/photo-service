@@ -1,4 +1,5 @@
 """Package for all views."""
+
 from .albums import AlbumsView, AlbumView
 from .config import ConfigsView, ConfigView
 from .g_photos import GooglePhotosView

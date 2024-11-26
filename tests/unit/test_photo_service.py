@@ -1,4 +1,5 @@
 """Unit test cases for the photo-service module."""
+
 import pytest
 
 

@@ -1,4 +1,5 @@
 """Module for ai events adapter."""
+
 from typing import Any, List, Optional
 
 from .adapter import Adapter

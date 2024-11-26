@@ -1,4 +1,5 @@
 """Resource module for albums resources."""
+
 import json
 import logging
 import os

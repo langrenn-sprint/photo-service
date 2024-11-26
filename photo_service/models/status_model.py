@@ -1,4 +1,5 @@
 """Photo data class module."""
+
 from dataclasses import dataclass, field
 from datetime import time
 from typing import Optional

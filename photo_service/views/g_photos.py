@@ -1,4 +1,5 @@
 """Resource module for photos resources."""
+
 import json
 import logging
 
