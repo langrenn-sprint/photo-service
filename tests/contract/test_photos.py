@@ -137,7 +137,7 @@ async def test_get_photo_by_id(
         async with session.get(url) as response:
             photos = await response.json()
         id = photos[0]["id"]
-        url = f"{url}/{id}"
+        url = f"{http_service}/photos/{id}"
         async with session.get(url) as response:
             body = await response.json()
 
@@ -164,7 +164,7 @@ async def test_update_photo(http_service: Any, token: MockFixture, photo: dict) 
         async with session.get(url) as response:
             photos = await response.json()
         id = photos[0]["id"]
-        url = f"{url}/{id}"
+        url = f"{http_service}/photos/{id}"
 
         request_body = deepcopy(photo)
         new_name = "Oslo Skagen sprint updated"
@@ -195,7 +195,7 @@ async def test_delete_photo(http_service: Any, token: MockFixture) -> None:
         async with session.get(url) as response:
             photos = await response.json()
         id = photos[0]["id"]
-        url = f"{url}/{id}"
+        url = f"{http_service}/photos/{id}"
         async with session.delete(url, headers=headers) as response:
             assert response.status == 204
 
