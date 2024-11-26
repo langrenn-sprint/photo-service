@@ -112,7 +112,7 @@ async def test_create_photo(
 @pytest.mark.asyncio(scope="module")
 async def test_get_all_photos(http_service: Any, token: MockFixture) -> None:
     """Should return OK and a list of photos as json."""
-    url = f"{http_service}/photos"
+    url = f"{http_service}/photos?eventId=1e95458c-e000-4d8b-beda-f860c77fd758"
 
     session = ClientSession()
     async with session.get(url) as response:
@@ -154,7 +154,7 @@ async def test_get_photo_by_id(
 @pytest.mark.asyncio(scope="module")
 async def test_update_photo(http_service: Any, token: MockFixture, photo: dict) -> None:
     """Should return No Content."""
-    url = f"{http_service}/photos"
+    url = f"{http_service}/photos?eventId=1e95458c-e000-4d8b-beda-f860c77fd758"
     headers = {
         hdrs.CONTENT_TYPE: "application/json",
         hdrs.AUTHORIZATION: f"Bearer {token}",
@@ -186,7 +186,7 @@ async def test_update_photo(http_service: Any, token: MockFixture, photo: dict) 
 @pytest.mark.asyncio(scope="module")
 async def test_delete_photo(http_service: Any, token: MockFixture) -> None:
     """Should return No Content."""
-    url = f"{http_service}/photos"
+    url = f"{http_service}/photos?eventId=1e95458c-e000-4d8b-beda-f860c77fd758"
     headers = {
         hdrs.AUTHORIZATION: f"Bearer {token}",
     }
