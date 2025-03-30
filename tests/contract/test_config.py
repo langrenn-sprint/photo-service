@@ -23,34 +23,43 @@ DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 
 
-@pytest.fixture
-def token() -> str:
-    """Create a valid token."""
-    secret = os.getenv("JWT_SECRET")
-    algorithm = "HS256"
-    payload = {"username": os.getenv("ADMIN_USERNAME"), "role": "admin"}
-    return jwt.encode(payload, secret, algorithm)
-
-
 @pytest.fixture(scope="module")
+async def token(http_service: Any) -> str:
+    """Create a valid token."""
+    url = f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/login"
+    headers = {hdrs.CONTENT_TYPE: "application/json"}
+    request_body = {
+        "username": os.getenv("ADMIN_USERNAME"),
+        "password": os.getenv("ADMIN_PASSWORD"),
+    }
+    session = ClientSession()
+    async with session.post(url, headers=headers, json=request_body) as response:
+        body = await response.json()
+    await session.close()
+    if response.status != 200:
+        logging.error(f"Got unexpected status {response.status} from {http_service}.")
+    return body["token"]
+
+
+@pytest.fixture(scope="module", autouse=True)
 async def clear_db() -> AsyncGenerator:
     """Delete all events before we start."""
     mongo = motor.motor_asyncio.AsyncIOMotorClient(
         host=DB_HOST, port=DB_PORT, username=DB_USER, password=DB_PASSWORD
     )
     try:
-        await mongo.drop_database(f"{DB_NAME}")
-    except Exception:
-        logging.exception("Failed to drop database %s", DB_NAME)
-        raise
+        await db_utils.drop_db_and_recreate_indexes(mongo, DB_NAME)
+    except Exception as error:
+        logging.exception(f"Failed to drop database {DB_NAME}: {error}")
+        raise error
 
     yield
 
     try:
-        await mongo.drop_database(f"{DB_NAME}")
-    except Exception:
-        logging.exception("Failed to drop database %s", DB_NAME)
-        raise
+        await db_utils.drop_db(mongo, DB_NAME)
+    except Exception as error:
+        logging.exception(f"Failed to drop database {DB_NAME}: {error}")
+        raise error
 
 
 @pytest.fixture(scope="module")
