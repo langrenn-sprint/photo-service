@@ -8,7 +8,7 @@ from aiohttp import ClientSession
 
 
 @pytest.mark.contract
-@pytest.mark.asyncio(scope="module")
+@pytest.mark.asyncio
 async def test_ready(http_service: Any) -> None:
     """Should return OK."""
     url = f"{http_service}/ready"

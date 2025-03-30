@@ -7,6 +7,7 @@ from copy import deepcopy
 from http import HTTPStatus
 from typing import Any
 
+import jwt
 import motor.motor_asyncio
 import pytest
 from aiohttp import ClientSession, hdrs
@@ -23,42 +24,33 @@ DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 
 
-@pytest.fixture(scope="module")
-async def token(http_service: Any) -> str:
+@pytest.fixture
+def token() -> str:
     """Create a valid token."""
-    url = f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/login"
-    headers = {hdrs.CONTENT_TYPE: "application/json"}
-    request_body = {
-        "username": os.getenv("ADMIN_USERNAME"),
-        "password": os.getenv("ADMIN_PASSWORD"),
-    }
-    session = ClientSession()
-    async with session.post(url, headers=headers, json=request_body) as response:
-        body = await response.json()
-    await session.close()
-    if response.status != HTTPStatus.OK:
-        logging.error(f"Got unexpected status {response.status} from {http_service}.")
-    return body["token"]
+    secret = os.getenv("JWT_SECRET")
+    algorithm = "HS256"
+    payload = {"username": os.getenv("ADMIN_USERNAME"), "role": "admin"}
+    return jwt.encode(payload, secret, algorithm)
 
 
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(scope="module")
 async def clear_db() -> AsyncGenerator:
     """Delete all events before we start."""
     mongo = motor.motor_asyncio.AsyncIOMotorClient(
         host=DB_HOST, port=DB_PORT, username=DB_USER, password=DB_PASSWORD
     )
     try:
-        await db_utils.drop_db_and_recreate_indexes(mongo, DB_NAME)
+        await mongo.drop_database(f"{DB_NAME}")
     except Exception:
-        logging.exception(f"Failed to drop database {DB_NAME}")
+        logging.exception("Failed to drop database %s", DB_NAME)
         raise
 
     yield
 
     try:
-        await db_utils.drop_db(mongo, DB_NAME)
+        await mongo.drop_database(f"{DB_NAME}")
     except Exception:
-        logging.exception(f"Failed to drop database {DB_NAME}")
+        logging.exception("Failed to drop database %s", DB_NAME)
         raise
 
 
@@ -85,7 +77,7 @@ async def photo() -> dict:
 
 
 @pytest.mark.contract
-@pytest.mark.asyncio(scope="module")
+@pytest.mark.asyncio
 async def test_create_photo(
     http_service: Any,
     token: MockFixture,
@@ -109,7 +101,7 @@ async def test_create_photo(
 
 
 @pytest.mark.contract
-@pytest.mark.asyncio(scope="module")
+@pytest.mark.asyncio
 async def test_get_all_photos(http_service: Any, token: MockFixture) -> None:
     """Should return OK and a list of photos as json."""
     url = f"{http_service}/photos?eventId=1e95458c-e000-4d8b-beda-f860c77fd758"
@@ -126,7 +118,7 @@ async def test_get_all_photos(http_service: Any, token: MockFixture) -> None:
 
 
 @pytest.mark.contract
-@pytest.mark.asyncio(scope="module")
+@pytest.mark.asyncio
 async def test_get_photo_by_id(
     http_service: Any, token: MockFixture, photo: dict
 ) -> None:
@@ -151,7 +143,7 @@ async def test_get_photo_by_id(
 
 
 @pytest.mark.contract
-@pytest.mark.asyncio(scope="module")
+@pytest.mark.asyncio
 async def test_update_photo(http_service: Any, token: MockFixture, photo: dict) -> None:
     """Should return No Content."""
     url = f"{http_service}/photos?eventId=1e95458c-e000-4d8b-beda-f860c77fd758"
@@ -183,7 +175,7 @@ async def test_update_photo(http_service: Any, token: MockFixture, photo: dict) 
 
 
 @pytest.mark.contract
-@pytest.mark.asyncio(scope="module")
+@pytest.mark.asyncio
 async def test_delete_photo(http_service: Any, token: MockFixture) -> None:
     """Should return No Content."""
     url = f"{http_service}/photos?eventId=1e95458c-e000-4d8b-beda-f860c77fd758"
