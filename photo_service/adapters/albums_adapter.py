@@ -1,6 +1,6 @@
 """Module for sync adapter."""
 
-from typing import Any, List, Optional
+from typing import Any
 
 from .adapter import Adapter
 
@@ -11,44 +11,35 @@ class AlbumsAdapter(Adapter):
     @classmethod
     async def create_album(cls: Any, db: Any, album: dict) -> str:  # pragma: no cover
         """Create album function."""
-        result = await db.albums_collection.insert_one(album)
-        return result
+        return await db.albums_collection.insert_one(album)
 
     @classmethod
-    async def get_all_albums(cls: Any, db: Any) -> List:  # pragma: no cover
+    async def get_all_albums(cls: Any, db: Any) -> list:  # pragma: no cover
         """Get all albums function."""
-        albums: List = []
-        cursor = db.albums_collection.find()
-        for album in await cursor.to_list(None):
-            albums.append(album)
-        return albums
+        return await db.albums_collection.find()
 
     @classmethod
     async def get_album_by_g_id(
         cls: Any, db: Any, g_id: str
     ) -> dict:  # pragma: no cover
         """Get album function."""
-        result = await db.albums_collection.find_one({"g_id": g_id})
-        return result
+        return await db.albums_collection.find_one({"g_id": g_id})
 
     @classmethod
-    async def get_album_by_id(cls: Any, db: Any, id: str) -> dict:  # pragma: no cover
+    async def get_album_by_id(cls: Any, db: Any, c_id: str) -> dict:  # pragma: no cover
         """Get album function."""
-        result = await db.albums_collection.find_one({"id": id})
-        return result
+        return await db.albums_collection.find_one({"id": c_id})
 
     @classmethod
     async def update_album(
-        cls: Any, db: Any, id: str, album: dict
-    ) -> Optional[str]:  # pragma: no cover
+        cls: Any, db: Any, c_id: str, album: dict
+    ) -> str | None:  # pragma: no cover
         """Get album function."""
-        result = await db.albums_collection.replace_one({"id": id}, album)
-        return result
+        return await db.albums_collection.replace_one({"id": c_id}, album)
 
     @classmethod
     async def delete_album(
-        cls: Any, db: Any, id: str
-    ) -> Optional[str]:  # pragma: no cover
+        cls: Any, db: Any, c_id: str
+    ) -> str | None:  # pragma: no cover
         """Get album function."""
-        result = await db.albums_collection.delete_one({"id": id})
-        return result
+        return await db.albums_collection.delete_one({"id": c_id})

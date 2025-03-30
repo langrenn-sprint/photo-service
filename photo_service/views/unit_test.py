@@ -71,31 +71,31 @@ async def test_config(db: Any, action: int) -> str:
         body = f"Config created: {result}"
     elif action == 2:
         # get all config
-        result = await ConfigService.get_all_configs(db)  # type: ignore
+        result = await ConfigService.get_all_configs(db)
         body = f"Configs: {result}"
     elif action == 3:
         # get all config by event
         event_id = config_dict["event_id"]
-        result = await ConfigService.get_all_configs(db, event_id)  # type: ignore
+        result = await ConfigService.get_all_configs(db, event_id)
         body = f"Configs by event: {result}"
     elif action == 4:
         # update config
         configs = await ConfigService.get_all_configs(db)
         new_config = configs[0]
         new_config.value = "DENNE ER OPPDATERT!"
-        result = await ConfigService.update_config(db, new_config)  # type: ignore
+        result = await ConfigService.update_config(db, new_config)
         body = f"Config updated: {result} - {new_config}"
     elif action == 5:
         # delete config
         configs = await ConfigService.get_all_configs(db)
         new_config = configs[0]
-        result = await ConfigService.delete_config(db, new_config.id)  # type: ignore
+        result = await ConfigService.delete_config(db, str(new_config.id))
         body = f"Config deleted: {result} - {new_config}"
     elif action == 6:
         # get config by key
         event_id = config_dict["event_id"]
         key = config_dict["key"]
-        result = await ConfigService.get_config_by_key(db, event_id, key)  # type: ignore
+        result = await ConfigService.get_config_by_key(db, event_id, key)
         body = f"Config: {result}"
     return body
 
@@ -120,19 +120,19 @@ async def test_status(db: Any, action: int) -> str:
     elif action == 2:
         # get all status
         event_id = status_dict["event_id"]
-        result = await StatusService.get_all_status(db, event_id, 25)  # type: ignore
+        result = await StatusService.get_all_status(db, event_id, 25)
         body = f"Statuses: {result}"
     elif action == 3:
         # get all status by type
         event_id = status_dict["event_id"]
-        type = status_dict["type"]
-        result = await StatusService.get_all_status_by_type(db, event_id, type, 25)  # type: ignore
+        status_type = status_dict["type"]
+        result = await StatusService.get_all_status_by_type(db, event_id, status_type, 25)
         body = f"Statuses by type: {result}"
     elif action == 5:
         # delete status
         event_id = status_dict["event_id"]
         statuss = await StatusService.get_all_status(db, event_id, 1)
         new_status = statuss[0]
-        result = await StatusService.delete_status(db, new_status.id)  # type: ignore
+        result = await StatusService.delete_status(db, str(new_status.id))
         body = f"Status deleted: {result} - {new_status}"
     return body

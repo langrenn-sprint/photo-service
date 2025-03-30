@@ -2,11 +2,10 @@
 
 import logging
 import os
-from typing import Any, Optional
+from http import HTTPStatus
+from typing import Any
 
-from aiohttp import ClientSession
-from aiohttp import hdrs
-from aiohttp import web
+from aiohttp import ClientSession, hdrs, web
 from multidict import MultiDict
 
 GOOGLE_PHOTO_SERVER = os.getenv(
@@ -24,7 +23,7 @@ class GooglePhotosService:
     """Class representing google photos."""
 
     @classmethod
-    async def get_media_items(cls: Any, token: str, album_id: Optional[str]) -> dict:
+    async def get_media_items(cls: Any, token: str, album_id: str | None) -> dict:
         """Get all albums."""
         album_items = {}
         servicename = "get_album_items"
@@ -34,6 +33,7 @@ class GooglePhotosService:
                 (hdrs.AUTHORIZATION, f"Bearer {token}"),
             ]
         )
+        request_body = {}
         if album_id:
             request_body = {"albumId": album_id}
         async with ClientSession() as session:
@@ -43,7 +43,7 @@ class GooglePhotosService:
                 json=request_body,
             ) as resp:
                 logging.debug(f"{servicename} - got response {resp.status}")
-                if resp.status == 200:
+                if resp.status == HTTPStatus.OK:
                     album_items = await resp.json()
                 else:
                     body = await resp.json()
@@ -67,7 +67,7 @@ class GooglePhotosService:
                 f"{GOOGLE_PHOTO_SERVER}/albums", headers=headers
             ) as resp:
                 logging.debug(f"{servicename} - got response {resp.status}")
-                if resp.status == 200:
+                if resp.status == HTTPStatus.OK:
                     albums = await resp.json()
                 else:
                     body = await resp.json()

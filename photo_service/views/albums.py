@@ -18,9 +18,9 @@ from multidict import MultiDict
 from photo_service.adapters import UsersAdapter
 from photo_service.models import Album
 from photo_service.services import (
-    AlbumNotFoundException,
+    AlbumNotFoundError,
     AlbumsService,
-    IllegalValueException,
+    IllegalValueError,
 )
 from photo_service.utils.jwt_utils import extract_token_from_request
 
@@ -42,10 +42,8 @@ class AlbumsView(View):
             body = album.to_json()
         else:
             albums = await AlbumsService.get_all_albums(db)
-            list = []
-            for _e in albums:
-                list.append(_e.to_dict())
-            body = json.dumps(list, default=str, ensure_ascii=False)
+            _list = [_e.to_dict() for _e in albums]
+            body = json.dumps(_list, default=str, ensure_ascii=False)
         return Response(status=200, body=body, content_type="application/json")
 
     async def post(self) -> Response:
@@ -68,14 +66,14 @@ class AlbumsView(View):
 
         try:
             album_id = await AlbumsService.create_album(db, album)
-        except IllegalValueException as e:
+        except IllegalValueError as e:
             raise HTTPUnprocessableEntity(reason=str(e)) from e
         if album_id:
             logging.debug(f"inserted document with album_id {album_id}")
             headers = MultiDict([(hdrs.LOCATION, f"{BASE_URL}/albums/{album_id}")])
 
             return Response(status=201, headers=headers)
-        raise HTTPBadRequest() from None
+        raise HTTPBadRequest from None
 
 
 class AlbumView(View):
@@ -90,7 +88,7 @@ class AlbumView(View):
 
         try:
             album = await AlbumsService.get_album_by_id(db, album_id)
-        except AlbumNotFoundException as e:
+        except AlbumNotFoundError as e:
             raise HTTPNotFound(reason=str(e)) from e
         logging.debug(f"Got album: {album}")
         body = album.to_json()
@@ -119,9 +117,9 @@ class AlbumView(View):
 
         try:
             await AlbumsService.update_album(db, album_id, album)
-        except IllegalValueException as e:
+        except IllegalValueError as e:
             raise HTTPUnprocessableEntity(reason=str(e)) from e
-        except AlbumNotFoundException as e:
+        except AlbumNotFoundError as e:
             raise HTTPNotFound(reason=str(e)) from e
         return Response(status=204)
 
@@ -139,6 +137,6 @@ class AlbumView(View):
 
         try:
             await AlbumsService.delete_album(db, album_id)
-        except AlbumNotFoundException as e:
+        except AlbumNotFoundError as e:
             raise HTTPNotFound(reason=str(e)) from e
         return Response(status=204)

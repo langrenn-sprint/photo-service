@@ -1,13 +1,15 @@
 """Contract test cases for ping."""
 
-from copy import deepcopy
 import logging
 import os
-from typing import Any, AsyncGenerator
+from collections.abc import AsyncGenerator
+from copy import deepcopy
+from http import HTTPStatus
+from typing import Any
 
-from aiohttp import ClientSession, hdrs
 import motor.motor_asyncio
 import pytest
+from aiohttp import ClientSession, hdrs
 from pytest_mock import MockFixture
 
 from photo_service.utils import db_utils
@@ -15,14 +17,13 @@ from photo_service.utils import db_utils
 USERS_HOST_SERVER = os.getenv("USERS_HOST_SERVER")
 USERS_HOST_PORT = os.getenv("USERS_HOST_PORT")
 DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_PORT = int(os.getenv("DB_PORT", 27017))
-DB_NAME = os.getenv("DB_NAME", "events_test")
+DB_PORT = int(os.getenv("DB_PORT", "27017"))
+DB_NAME = os.getenv("DB_NAME", "test")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 
 
 @pytest.fixture(scope="module")
-@pytest.mark.asyncio(scope="module")
 async def token(http_service: Any) -> str:
     """Create a valid token."""
     url = f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/login"
@@ -35,36 +36,35 @@ async def token(http_service: Any) -> str:
     async with session.post(url, headers=headers, json=request_body) as response:
         body = await response.json()
     await session.close()
-    if response.status != 200:
+    if response.status != HTTPStatus.OK:
         logging.error(f"Got unexpected status {response.status} from {http_service}.")
     return body["token"]
 
 
 @pytest.fixture(scope="module", autouse=True)
-@pytest.mark.asyncio(scope="module")
 async def clear_db() -> AsyncGenerator:
     """Delete all events before we start."""
-    mongo = motor.motor_asyncio.AsyncIOMotorClient(  # type: ignore
+    mongo = motor.motor_asyncio.AsyncIOMotorClient(
         host=DB_HOST, port=DB_PORT, username=DB_USER, password=DB_PASSWORD
     )
     try:
         await db_utils.drop_db_and_recreate_indexes(mongo, DB_NAME)
-    except Exception as error:
-        logging.error(f"Failed to drop database {DB_NAME}: {error}")
-        raise error
+    except Exception:
+        logging.exception(f"Failed to drop database {DB_NAME}")
+        raise
 
     yield
 
     try:
         await db_utils.drop_db(mongo, DB_NAME)
-    except Exception as error:
-        logging.error(f"Failed to drop database {DB_NAME}: {error}")
-        raise error
+    except Exception:
+        logging.exception(f"Failed to drop database {DB_NAME}")
+        raise
 
 
 @pytest.fixture(scope="module")
 async def album() -> dict:
-    """An album object for testing."""
+    """Album object for testing."""
     return {
         "camera_position": "right",
         "changelog": [],
@@ -100,7 +100,7 @@ async def test_create_album(
         async with session.post(url, headers=headers, json=request_body) as response:
             status = response.status
 
-        assert status == 201
+        assert status == HTTPStatus.CREATED
         assert "/albums/" in response.headers[hdrs.LOCATION]
 
 
@@ -115,7 +115,7 @@ async def test_get_all_albums(http_service: Any, token: MockFixture) -> None:
         albums = await response.json()
     await session.close()
 
-    assert response.status == 200
+    assert response.status == HTTPStatus.OK
     assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
     assert type(albums) is list
     assert len(albums) > 0
@@ -132,15 +132,15 @@ async def test_get_album_by_id(
     async with ClientSession() as session:
         async with session.get(url) as response:
             albums = await response.json()
-        id = albums[0]["id"]
-        url = f"{url}/{id}"
+        a_id = albums[0]["id"]
+        url = f"{url}/{a_id}"
         async with session.get(url) as response:
             body = await response.json()
 
-    assert response.status == 200
+    assert response.status == HTTPStatus.OK
     assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
     assert type(album) is dict
-    assert body["id"] == id
+    assert body["id"] == a_id
     assert body["last_sync_time"] == album["last_sync_time"]
 
 
@@ -157,21 +157,21 @@ async def test_update_album(http_service: Any, token: MockFixture, album: dict) 
     async with ClientSession() as session:
         async with session.get(url) as response:
             albums = await response.json()
-        id = albums[0]["id"]
+        a_id = albums[0]["id"]
         g_id = albums[0]["g_id"]
-        url = f"{url}/{id}"
+        url = f"{url}/{a_id}"
 
         request_body = deepcopy(album)
         new_name = "Oslo Skagen sprint updated"
-        request_body["id"] = id
+        request_body["id"] = a_id
         request_body["g_id"] = g_id
         request_body["place"] = new_name
 
         async with session.put(url, headers=headers, json=request_body) as response:
-            assert response.status == 204
+            assert response.status == HTTPStatus.NO_CONTENT
 
         async with session.get(url) as response:
-            assert response.status == 200
+            assert response.status == HTTPStatus.OK
             updated_album = await response.json()
             assert updated_album["g_id"] == album["g_id"]
             assert updated_album["place"] == new_name
@@ -189,10 +189,10 @@ async def test_delete_album(http_service: Any, token: MockFixture) -> None:
     async with ClientSession() as session:
         async with session.get(url) as response:
             albums = await response.json()
-        id = albums[0]["id"]
-        url = f"{url}/{id}"
+        a_id = albums[0]["id"]
+        url = f"{url}/{a_id}"
         async with session.delete(url, headers=headers) as response:
-            assert response.status == 204
+            assert response.status == HTTPStatus.NO_CONTENT
 
         async with session.get(url) as response:
-            assert response.status == 404
+            assert response.status == HTTPStatus.NOT_FOUND

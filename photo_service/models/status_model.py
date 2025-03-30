@@ -2,7 +2,6 @@
 
 from dataclasses import dataclass, field
 from datetime import time
-from typing import Optional
 
 from dataclasses_json import DataClassJsonMixin
 
@@ -15,4 +14,4 @@ class Status(DataClassJsonMixin):
     time: time
     type: str
     message: str
-    id: Optional[str] = field(default=None)
+    id: str | None = field(default=None)

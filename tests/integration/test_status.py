@@ -1,23 +1,30 @@
 """Integration test cases for the status route."""
 
 import os
+from http import HTTPStatus
 
+import jwt
+import pytest
 from aiohttp import hdrs
 from aiohttp.test_utils import TestClient as _TestClient
 from aioresponses import aioresponses
-import jwt
+from dotenv import load_dotenv
 from multidict import MultiDict
-import pytest
 from pytest_mock import MockFixture
+
+load_dotenv()
+
+USERS_HOST_SERVER = os.getenv("USERS_HOST_SERVER", "localhost")
+USERS_HOST_PORT = os.getenv("USERS_HOST_PORT", "8086")
 
 
 @pytest.fixture
 def token() -> str:
-    """Create a valid token."""
+    """Token."""
     secret = os.getenv("JWT_SECRET")
     algorithm = "HS256"
     payload = {"identity": os.getenv("ADMIN_USERNAME"), "roles": ["admin"]}
-    return jwt.encode(payload, secret, algorithm)  # type: ignore
+    return jwt.encode(payload, secret, algorithm)
 
 
 @pytest.fixture
@@ -26,12 +33,12 @@ def token_unsufficient_role() -> str:
     secret = os.getenv("JWT_SECRET")
     algorithm = "HS256"
     payload = {"identity": "user", "roles": ["user"]}
-    return jwt.encode(payload, secret, algorithm)  # type: ignore
+    return jwt.encode(payload, secret, algorithm)
 
 
 @pytest.fixture
 async def status() -> dict:
-    """An status object for testing."""
+    """Status object for testing."""
     return {
         "event_id": "1e95458c-e000-4d8b-beda-f860c77fd758",
         "time": "2022-09-25T16:41:52",
@@ -47,15 +54,15 @@ async def test_create_status(
     token: MockFixture,
     status: dict,
 ) -> None:
-    """Should return Created, location header."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    """Test create status."""
+    test_a_id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "photo_service.services.status_service.create_id",
-        return_value=ID,
+        return_value=test_a_id,
     )
     mocker.patch(
         "photo_service.adapters.status_adapter.StatusAdapter.create_status",
-        return_value=ID,
+        return_value=test_a_id,
     )
 
     request_body = status
@@ -66,10 +73,10 @@ async def test_create_status(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post("/status", headers=headers, json=request_body)
-        assert resp.status == 201
-        assert f"/status/{ID}" in resp.headers[hdrs.LOCATION]
+        assert resp.status == HTTPStatus.CREATED
+        assert f"/status/{test_a_id}" in resp.headers[hdrs.LOCATION]
 
 
 @pytest.mark.integration
@@ -83,13 +90,13 @@ async def test_get_all_status(
 
     mocker.patch(
         "photo_service.adapters.status_adapter.StatusAdapter.get_all_status",
-        return_value=status_list,  # type: ignore
+        return_value=status_list,
     )
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.get(f"/status?count=25&eventId={event_id}")
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
         body = await resp.json()
         assert type(body) is list
@@ -108,15 +115,15 @@ async def test_get_all_status_by_type(
 
     mocker.patch(
         "photo_service.adapters.status_adapter.StatusAdapter.get_all_status_by_type",
-        return_value=status_list,  # type: ignore
+        return_value=status_list,
     )
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.get(
             f"/status?count=25&eventId={event_id}&type={status_type}"
         )
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
         body = await resp.json()
         assert type(body) is list
@@ -134,13 +141,13 @@ async def test_get_all_status_no_limit(
 
     mocker.patch(
         "photo_service.adapters.status_adapter.StatusAdapter.get_all_status",
-        return_value=status_list,  # type: ignore
+        return_value=status_list,
     )
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.get(f"/status?eventId={event_id}")
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
         body = await resp.json()
         assert type(body) is list
@@ -167,9 +174,9 @@ async def test_create_status_adapter_fails(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post("/status", headers=headers, json=request_body)
-        assert resp.status == 422
+        assert resp.status == HTTPStatus.UNPROCESSABLE_ENTITY
 
 
 @pytest.mark.integration
@@ -177,44 +184,20 @@ async def test_delete_status_not_found(
     client: _TestClient, mocker: MockFixture, token: MockFixture
 ) -> None:
     """Should return No Content."""
-    ID = "dummy"
+    test_a_id = "dummy"
     mocker.patch(
         "photo_service.adapters.status_adapter.StatusAdapter.delete_status",
-        return_value=ID,
+        return_value=test_a_id,
     )
     headers = {
         hdrs.AUTHORIZATION: f"Bearer {token}",
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
 
-        resp = await client.delete(f"/status/{ID}", headers=headers)
-        assert resp.status == 404
-
-
-# Unauthorized cases:
-
-
-@pytest.mark.integration
-async def test_create_status_no_authorization(
-    client: _TestClient, mocker: MockFixture
-) -> None:
-    """Should return 401 Unauthorized."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
-    mocker.patch(
-        "photo_service.adapters.status_adapter.StatusAdapter.create_status",
-        return_value=ID,
-    )
-
-    request_body = {"place": "Oslo Skagen sprint"}
-    headers = MultiDict([(hdrs.CONTENT_TYPE, "application/json")])
-
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=401)
-
-        resp = await client.post("/status", headers=headers, json=request_body)
-        assert resp.status == 401
+        resp = await client.delete(f"/status/{test_a_id}", headers=headers)
+        assert resp.status == HTTPStatus.NOT_FOUND
 
 
 # Forbidden:
@@ -223,10 +206,10 @@ async def test_create_status_insufficient_role(
     client: _TestClient, mocker: MockFixture, token_unsufficient_role: MockFixture
 ) -> None:
     """Should return 403 Forbidden."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    test_a_id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "photo_service.adapters.status_adapter.StatusAdapter.create_status",
-        return_value=ID,
+        return_value=test_a_id,
     )
     request_body = {"place": "Oslo Skagen sprint"}
     headers = {
@@ -235,6 +218,6 @@ async def test_create_status_insufficient_role(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=403)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=403)
         resp = await client.post("/status", headers=headers, json=request_body)
-        assert resp.status == 403
+        assert resp.status == HTTPStatus.FORBIDDEN

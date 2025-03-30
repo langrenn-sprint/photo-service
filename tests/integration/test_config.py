@@ -1,14 +1,21 @@
 """Integration test cases for the config route."""
 
 import os
+from http import HTTPStatus
 
+import jwt
+import pytest
 from aiohttp import hdrs
 from aiohttp.test_utils import TestClient as _TestClient
 from aioresponses import aioresponses
-import jwt
+from dotenv import load_dotenv
 from multidict import MultiDict
-import pytest
 from pytest_mock import MockFixture
+
+load_dotenv()
+
+USERS_HOST_SERVER = os.getenv("USERS_HOST_SERVER", "localhost")
+USERS_HOST_PORT = os.getenv("USERS_HOST_PORT", "8086")
 
 
 @pytest.fixture
@@ -17,7 +24,7 @@ def token() -> str:
     secret = os.getenv("JWT_SECRET")
     algorithm = "HS256"
     payload = {"identity": os.getenv("ADMIN_USERNAME"), "roles": ["admin"]}
-    return jwt.encode(payload, secret, algorithm)  # type: ignore
+    return jwt.encode(payload, secret, algorithm)
 
 
 @pytest.fixture
@@ -26,12 +33,12 @@ def token_unsufficient_role() -> str:
     secret = os.getenv("JWT_SECRET")
     algorithm = "HS256"
     payload = {"identity": "user", "roles": ["user"]}
-    return jwt.encode(payload, secret, algorithm)  # type: ignore
+    return jwt.encode(payload, secret, algorithm)
 
 
 @pytest.fixture
 async def config() -> dict:
-    """An config object for testing."""
+    """Config object for testing."""
     return {
         "event_id": "1e95458c-e000-4d8b-beda-f860c77fd758",
         "key": "video_config",
@@ -46,19 +53,19 @@ async def test_create_config(
     token: MockFixture,
     config: dict,
 ) -> None:
-    """Should return Created, location header."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    """Test Return Created, location header."""
+    test_a_id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "photo_service.services.config_service.create_id",
-        return_value=ID,
+        return_value=test_a_id,
     )
     mocker.patch(
         "photo_service.adapters.config_adapter.ConfigAdapter.create_config",
-        return_value=ID,
+        return_value=test_a_id,
     )
     mocker.patch(
         "photo_service.adapters.config_adapter.ConfigAdapter.get_config_by_key",
-        return_value={},  # type: ignore
+        return_value={},
     )
 
     request_body = config
@@ -69,30 +76,30 @@ async def test_create_config(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post("/config", headers=headers, json=request_body)
-        assert resp.status == 201
-        assert f"/config/{ID}" in resp.headers[hdrs.LOCATION]
+        assert resp.status == HTTPStatus.CREATED
+        assert f"/config/{test_a_id}" in resp.headers[hdrs.LOCATION]
 
 
 @pytest.mark.integration
 async def test_get_config_by_key(
     client: _TestClient, mocker: MockFixture, token: MockFixture, config: dict
 ) -> None:
-    """Should return OK, and a body containing one config."""
+    """Test return OK, and a body containing one config."""
     key = "video_config"
     event_id = "1e95458c-e000-4d8b-beda-f860c77fd758"
     value = "2024 Ragde-sprinten"
 
     mocker.patch(
         "photo_service.adapters.config_adapter.ConfigAdapter.get_config_by_key",
-        return_value=config,  # type: ignore
+        return_value=config,
     )
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.get(f"/config?count=25&eventId={event_id}&key={key}")
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
         body = await resp.json()
         assert type(body) is dict
@@ -110,13 +117,13 @@ async def test_get_all_configs(
 
     mocker.patch(
         "photo_service.adapters.config_adapter.ConfigAdapter.get_all_configs",
-        return_value=list_config,  # type: ignore
+        return_value=list_config,
     )
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.get("/configs")
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
         body = await resp.json()
         assert type(body) is list
@@ -135,13 +142,13 @@ async def test_get_all_configs_by_event(
 
     mocker.patch(
         "photo_service.adapters.config_adapter.ConfigAdapter.get_all_configs_by_event",
-        return_value=list_config,  # type: ignore
+        return_value=list_config,
     )
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.get(f"/configs?&eventId={event_id}")
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
         body = await resp.json()
         assert type(body) is list
@@ -157,18 +164,18 @@ async def test_create_config_key_exists(
     config: dict,
 ) -> None:
     """Should return Created, location header."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    test_a_id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "photo_service.services.config_service.create_id",
-        return_value=ID,
+        return_value=test_a_id,
     )
     mocker.patch(
         "photo_service.adapters.config_adapter.ConfigAdapter.create_config",
-        return_value=ID,
+        return_value=test_a_id,
     )
     mocker.patch(
         "photo_service.adapters.config_adapter.ConfigAdapter.get_config_by_key",
-        return_value=config,  # type: ignore
+        return_value=config,
     )
 
     request_body = config
@@ -179,9 +186,9 @@ async def test_create_config_key_exists(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post("/config", headers=headers, json=request_body)
-        assert resp.status == 422
+        assert resp.status == HTTPStatus.UNPROCESSABLE_ENTITY
 
 
 # Mandatory properties missing at create and update:
@@ -201,9 +208,9 @@ async def test_create_config_adapter_fails(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post("/config", headers=headers, json=request_body)
-        assert resp.status == 422
+        assert resp.status == HTTPStatus.UNPROCESSABLE_ENTITY
 
 
 @pytest.mark.integration
@@ -211,20 +218,20 @@ async def test_delete_config_not_found(
     client: _TestClient, mocker: MockFixture, token: MockFixture
 ) -> None:
     """Should return No Content."""
-    ID = "dummy"
+    test_a_id = "dummy"
     mocker.patch(
         "photo_service.adapters.config_adapter.ConfigAdapter.delete_config",
-        return_value=ID,
+        return_value=test_a_id,
     )
     headers = {
         hdrs.AUTHORIZATION: f"Bearer {token}",
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
 
-        resp = await client.delete(f"/config/{ID}", headers=headers)
-        assert resp.status == 404
+        resp = await client.delete(f"/config/{test_a_id}", headers=headers)
+        assert resp.status == HTTPStatus.NOT_FOUND
 
 
 # Unauthorized cases:
@@ -235,20 +242,20 @@ async def test_create_config_no_authorization(
     client: _TestClient, mocker: MockFixture
 ) -> None:
     """Should return 401 Unauthorized."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    test_a_id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "photo_service.adapters.config_adapter.ConfigAdapter.create_config",
-        return_value=ID,
+        return_value=test_a_id,
     )
 
     request_body = {"place": "Oslo Skagen sprint"}
     headers = MultiDict([(hdrs.CONTENT_TYPE, "application/json")])
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=401)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=401)
 
         resp = await client.post("/config", headers=headers, json=request_body)
-        assert resp.status == 401
+        assert resp.status == HTTPStatus.UNAUTHORIZED
 
 
 # Forbidden:
@@ -257,10 +264,10 @@ async def test_create_config_insufficient_role(
     client: _TestClient, mocker: MockFixture, token_unsufficient_role: MockFixture
 ) -> None:
     """Should return 403 Forbidden."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    test_a_id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "photo_service.adapters.config_adapter.ConfigAdapter.create_config",
-        return_value=ID,
+        return_value=test_a_id,
     )
     request_body = {"place": "Oslo Skagen sprint"}
     headers = {
@@ -269,6 +276,6 @@ async def test_create_config_insufficient_role(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=403)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=403)
         resp = await client.post("/config", headers=headers, json=request_body)
-        assert resp.status == 403
+        assert resp.status == HTTPStatus.FORBIDDEN

@@ -1,15 +1,22 @@
 """Integration test cases for the albums route."""
 
-from copy import deepcopy
 import os
+from copy import deepcopy
+from http import HTTPStatus
 
+import jwt
+import pytest
 from aiohttp import hdrs
 from aiohttp.test_utils import TestClient as _TestClient
 from aioresponses import aioresponses
-import jwt
+from dotenv import load_dotenv
 from multidict import MultiDict
-import pytest
 from pytest_mock import MockFixture
+
+load_dotenv()
+
+USERS_HOST_SERVER = os.getenv("USERS_HOST_SERVER", "localhost")
+USERS_HOST_PORT = os.getenv("USERS_HOST_PORT", "8086")
 
 
 @pytest.fixture
@@ -18,7 +25,7 @@ def token() -> str:
     secret = os.getenv("JWT_SECRET")
     algorithm = "HS256"
     payload = {"identity": os.getenv("ADMIN_USERNAME"), "roles": ["admin"]}
-    return jwt.encode(payload, secret, algorithm)  # type: ignore
+    return jwt.encode(payload, secret, algorithm)
 
 
 @pytest.fixture
@@ -27,12 +34,12 @@ def token_unsufficient_role() -> str:
     secret = os.getenv("JWT_SECRET")
     algorithm = "HS256"
     payload = {"identity": "user", "roles": ["user"]}
-    return jwt.encode(payload, secret, algorithm)  # type: ignore
+    return jwt.encode(payload, secret, algorithm)
 
 
 @pytest.fixture
 async def album() -> dict:
-    """An album object for testing."""
+    """Album object for testing."""
     return {
         "camera_position": "right",
         "changelog": [],
@@ -56,14 +63,14 @@ async def test_create_album(
     album: dict,
 ) -> None:
     """Should return Created, location header."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    test_a_id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "photo_service.services.albums_service.create_id",
-        return_value=ID,
+        return_value=test_a_id,
     )
     mocker.patch(
         "photo_service.adapters.albums_adapter.AlbumsAdapter.create_album",
-        return_value=ID,
+        return_value=test_a_id,
     )
 
     request_body = album
@@ -74,10 +81,10 @@ async def test_create_album(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post("/albums", headers=headers, json=request_body)
-        assert resp.status == 201
-        assert f"/albums/{ID}" in resp.headers[hdrs.LOCATION]
+        assert resp.status == HTTPStatus.CREATED
+        assert f"/albums/{test_a_id}" in resp.headers[hdrs.LOCATION]
 
 
 @pytest.mark.integration
@@ -85,19 +92,19 @@ async def test_get_album_by_g_id(
     client: _TestClient, mocker: MockFixture, token: MockFixture, album: dict
 ) -> None:
     """Should return OK, and a body containing one album."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    test_a_id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     g_id = (
         "APU9jkgGt20Pq1SHqEjC1TiOuOliKbH5P64k_roOwf_sXKuY57KFCCQ2g9UbOwRUg6OSVG4C9GZK"
     )
     mocker.patch(
         "photo_service.adapters.albums_adapter.AlbumsAdapter.get_album_by_g_id",
-        return_value={"id": ID} | album,  # type: ignore
+        return_value={"id": test_a_id} | album,
     )
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.get(f"/albums?gId={g_id}")
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
         body = await resp.json()
         assert type(album) is dict
@@ -111,21 +118,21 @@ async def test_get_album_by_id(
     client: _TestClient, mocker: MockFixture, token: MockFixture, album: dict
 ) -> None:
     """Should return OK, and a body containing one album."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    test_a_id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "photo_service.adapters.albums_adapter.AlbumsAdapter.get_album_by_id",
-        return_value={"id": ID} | album,  # type: ignore
+        return_value={"id": test_a_id} | album,
     )
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
 
-        resp = await client.get(f"/albums/{ID}")
-        assert resp.status == 200
+        resp = await client.get(f"/albums/{test_a_id}")
+        assert resp.status == HTTPStatus.OK
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
         body = await resp.json()
         assert type(album) is dict
-        assert body["id"] == ID
+        assert body["id"] == test_a_id
         assert body["place"] == album["place"]
         assert body["last_sync_time"] == album["last_sync_time"]
 
@@ -138,14 +145,14 @@ async def test_update_album_by_id(
     album: dict,
 ) -> None:
     """Should return No Content."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    test_a_id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "photo_service.adapters.albums_adapter.AlbumsAdapter.get_album_by_id",
-        return_value={"id": ID} | album,  # type: ignore
+        return_value={"id": test_a_id} | album,
     )
     mocker.patch(
         "photo_service.adapters.albums_adapter.AlbumsAdapter.update_album",
-        return_value={"id": ID} | album,  # type: ignore
+        return_value={"id": test_a_id} | album,
     )
 
     headers = {
@@ -154,14 +161,14 @@ async def test_update_album_by_id(
     }
     new_name = "Oslo Skagen sprint Oppdatert"
     request_body = deepcopy(album)
-    request_body["id"] = ID
+    request_body["id"] = test_a_id
     request_body["place"] = new_name
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
 
-        resp = await client.put(f"/albums/{ID}", headers=headers, json=request_body)
-        assert resp.status == 204
+        resp = await client.put(f"/albums/{test_a_id}", headers=headers, json=request_body)
+        assert resp.status == HTTPStatus.NO_CONTENT
 
 
 @pytest.mark.integration
@@ -169,13 +176,13 @@ async def test_get_all_albums(
     client: _TestClient, mocker: MockFixture, token: MockFixture
 ) -> None:
     """Should return OK and a valid json body."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    test_a_id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "photo_service.adapters.albums_adapter.AlbumsAdapter.get_all_albums",
         return_value=[
             {
                 "g_id": "google_album_id",
-                "id": ID,
+                "id": test_a_id,
                 "place": "Oslo Skagen Sprint",
                 "finish_line": False,
             }
@@ -183,14 +190,14 @@ async def test_get_all_albums(
     )
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.get("/albums")
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
         albums = await resp.json()
         assert type(albums) is list
         assert len(albums) > 0
-        assert ID == albums[0]["id"]
+        assert albums[0]["id"] == test_a_id
 
 
 @pytest.mark.integration
@@ -198,24 +205,24 @@ async def test_delete_album_by_id(
     client: _TestClient, mocker: MockFixture, token: MockFixture
 ) -> None:
     """Should return No Content."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    test_a_id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "photo_service.adapters.albums_adapter.AlbumsAdapter.get_album_by_id",
-        return_value={"id": ID, "place": "Oslo Skagen Sprint"},
+        return_value={"id": test_a_id, "place": "Oslo Skagen Sprint"},
     )
     mocker.patch(
         "photo_service.adapters.albums_adapter.AlbumsAdapter.delete_album",
-        return_value=ID,
+        return_value=test_a_id,
     )
     headers = {
         hdrs.AUTHORIZATION: f"Bearer {token}",
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
 
-        resp = await client.delete(f"/albums/{ID}", headers=headers)
-        assert resp.status == 204
+        resp = await client.delete(f"/albums/{test_a_id}", headers=headers)
+        assert resp.status == HTTPStatus.NO_CONTENT
 
 
 # Bad cases
@@ -227,14 +234,14 @@ async def test_create_album_missing_mandatory_property(
     client: _TestClient, mocker: MockFixture, token: MockFixture
 ) -> None:
     """Should return 422 HTTPUnprocessableEntity."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    test_a_id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "photo_service.services.albums_service.create_id",
-        return_value=ID,
+        return_value=test_a_id,
     )
     mocker.patch(
         "photo_service.adapters.albums_adapter.AlbumsAdapter.create_album",
-        return_value=ID,
+        return_value=test_a_id,
     )
     request_body = {"optional_property": "Optional_property"}
     headers = {
@@ -243,9 +250,9 @@ async def test_create_album_missing_mandatory_property(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post("/albums", headers=headers, json=request_body)
-        assert resp.status == 422
+        assert resp.status == HTTPStatus.UNPROCESSABLE_ENTITY
 
 
 @pytest.mark.integration
@@ -253,25 +260,25 @@ async def test_create_album_with_input_id(
     client: _TestClient, mocker: MockFixture, token: MockFixture
 ) -> None:
     """Should return 422 HTTPUnprocessableEntity."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    test_a_id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "photo_service.services.albums_service.create_id",
-        return_value=ID,
+        return_value=test_a_id,
     )
     mocker.patch(
         "photo_service.adapters.albums_adapter.AlbumsAdapter.create_album",
-        return_value=ID,
+        return_value=test_a_id,
     )
-    request_body = {"id": ID, "place": "Oslo Skagen sprint Oppdatert"}
+    request_body = {"id": test_a_id, "place": "Oslo Skagen sprint Oppdatert"}
     headers = {
         hdrs.CONTENT_TYPE: "application/json",
         hdrs.AUTHORIZATION: f"Bearer {token}",
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post("/albums", headers=headers, json=request_body)
-        assert resp.status == 422
+        assert resp.status == HTTPStatus.UNPROCESSABLE_ENTITY
 
 
 @pytest.mark.integration
@@ -294,9 +301,9 @@ async def test_create_album_adapter_fails(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post("/albums", headers=headers, json=request_body)
-        assert resp.status == 400
+        assert resp.status == HTTPStatus.BAD_REQUEST
 
 
 @pytest.mark.integration
@@ -304,27 +311,27 @@ async def test_update_album_by_id_missing_mandatory_property(
     client: _TestClient, mocker: MockFixture, token: MockFixture
 ) -> None:
     """Should return 422 HTTPUnprocessableEntity."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    test_a_id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "photo_service.adapters.albums_adapter.AlbumsAdapter.get_album_by_id",
-        return_value={"id": ID, "place": "Oslo Skagen Sprint"},
+        return_value={"id": test_a_id, "place": "Oslo Skagen Sprint"},
     )
     mocker.patch(
         "photo_service.adapters.albums_adapter.AlbumsAdapter.update_album",
-        return_value=ID,
+        return_value=test_a_id,
     )
 
     headers = {
         hdrs.CONTENT_TYPE: "application/json",
         hdrs.AUTHORIZATION: f"Bearer {token}",
     }
-    request_body = {"id": ID, "optional_property": "Optional_property"}
+    request_body = {"id": test_a_id, "optional_property": "Optional_property"}
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
 
-        resp = await client.put(f"/albums/{ID}", headers=headers, json=request_body)
-        assert resp.status == 422
+        resp = await client.put(f"/albums/{test_a_id}", headers=headers, json=request_body)
+        assert resp.status == HTTPStatus.UNPROCESSABLE_ENTITY
 
 
 @pytest.mark.integration
@@ -332,14 +339,14 @@ async def test_update_album_by_id_different_id_in_body(
     client: _TestClient, mocker: MockFixture, token: MockFixture
 ) -> None:
     """Should return 422 HTTPUnprocessableEntity."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    test_a_id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "photo_service.adapters.albums_adapter.AlbumsAdapter.get_album_by_id",
-        return_value={"id": ID, "place": "Oslo Skagen Sprint"},
+        return_value={"id": test_a_id, "place": "Oslo Skagen Sprint"},
     )
     mocker.patch(
         "photo_service.adapters.albums_adapter.AlbumsAdapter.update_album",
-        return_value=ID,
+        return_value=test_a_id,
     )
 
     headers = {
@@ -349,10 +356,10 @@ async def test_update_album_by_id_different_id_in_body(
     request_body = {"id": "different_id", "place": "Oslo Skagen sprint Oppdatert"}
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
 
-        resp = await client.put(f"/albums/{ID}", headers=headers, json=request_body)
-        assert resp.status == 422
+        resp = await client.put(f"/albums/{test_a_id}", headers=headers, json=request_body)
+        assert resp.status == HTTPStatus.UNPROCESSABLE_ENTITY
 
 
 # Unauthorized cases:
@@ -363,24 +370,24 @@ async def test_create_album_no_authorization(
     client: _TestClient, mocker: MockFixture
 ) -> None:
     """Should return 401 Unauthorized."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    test_a_id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "photo_service.services.albums_service.create_id",
-        return_value=ID,
+        return_value=test_a_id,
     )
     mocker.patch(
         "photo_service.adapters.albums_adapter.AlbumsAdapter.create_album",
-        return_value=ID,
+        return_value=test_a_id,
     )
 
     request_body = {"place": "Oslo Skagen sprint"}
     headers = MultiDict([(hdrs.CONTENT_TYPE, "application/json")])
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=401)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=401)
 
         resp = await client.post("/albums", headers=headers, json=request_body)
-        assert resp.status == 401
+        assert resp.status == HTTPStatus.UNAUTHORIZED
 
 
 @pytest.mark.integration
@@ -388,27 +395,27 @@ async def test_update_album_by_id_no_authorization(
     client: _TestClient, mocker: MockFixture
 ) -> None:
     """Should return 401 Unauthorized."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    test_a_id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "photo_service.adapters.albums_adapter.AlbumsAdapter.get_album_by_id",
-        return_value={"id": ID, "place": "Oslo Skagen Sprint"},
+        return_value={"id": test_a_id, "place": "Oslo Skagen Sprint"},
     )
     mocker.patch(
         "photo_service.adapters.albums_adapter.AlbumsAdapter.update_album",
-        return_value=ID,
+        return_value=test_a_id,
     )
 
     headers = {
         hdrs.CONTENT_TYPE: "application/json",
     }
 
-    request_body = {"id": ID, "place": "Oslo Skagen sprint Oppdatert"}
+    request_body = {"id": test_a_id, "place": "Oslo Skagen sprint Oppdatert"}
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=401)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=401)
 
-        resp = await client.put(f"/albums/{ID}", headers=headers, json=request_body)
-        assert resp.status == 401
+        resp = await client.put(f"/albums/{test_a_id}", headers=headers, json=request_body)
+        assert resp.status == HTTPStatus.UNAUTHORIZED
 
 
 @pytest.mark.integration
@@ -416,17 +423,17 @@ async def test_delete_album_by_id_no_authorization(
     client: _TestClient, mocker: MockFixture
 ) -> None:
     """Should return 401 Unauthorized."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    test_a_id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "photo_service.adapters.albums_adapter.AlbumsAdapter.delete_album",
-        return_value=ID,
+        return_value=test_a_id,
     )
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=401)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=401)
 
-        resp = await client.delete(f"/albums/{ID}")
-        assert resp.status == 401
+        resp = await client.delete(f"/albums/{test_a_id}")
+        assert resp.status == HTTPStatus.UNAUTHORIZED
 
 
 # Forbidden:
@@ -435,14 +442,14 @@ async def test_create_album_insufficient_role(
     client: _TestClient, mocker: MockFixture, token_unsufficient_role: MockFixture
 ) -> None:
     """Should return 403 Forbidden."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    test_a_id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "photo_service.services.albums_service.create_id",
-        return_value=ID,
+        return_value=test_a_id,
     )
     mocker.patch(
         "photo_service.adapters.albums_adapter.AlbumsAdapter.create_album",
-        return_value=ID,
+        return_value=test_a_id,
     )
     request_body = {"place": "Oslo Skagen sprint"}
     headers = {
@@ -451,9 +458,9 @@ async def test_create_album_insufficient_role(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=403)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=403)
         resp = await client.post("/albums", headers=headers, json=request_body)
-        assert resp.status == 403
+        assert resp.status == HTTPStatus.FORBIDDEN
 
 
 # NOT FOUND CASES:
@@ -464,17 +471,17 @@ async def test_get_album_not_found(
     client: _TestClient, mocker: MockFixture, token: MockFixture
 ) -> None:
     """Should return 404 Not found."""
-    ID = "does-not-exist"
+    test_a_id = "does-not-exist"
     mocker.patch(
         "photo_service.adapters.albums_adapter.AlbumsAdapter.get_album_by_id",
         return_value=None,
     )
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
 
-        resp = await client.get(f"/albums/{ID}")
-        assert resp.status == 404
+        resp = await client.get(f"/albums/{test_a_id}")
+        assert resp.status == HTTPStatus.NOT_FOUND
 
 
 @pytest.mark.integration
@@ -482,7 +489,7 @@ async def test_update_album_not_found(
     client: _TestClient, mocker: MockFixture, token: MockFixture
 ) -> None:
     """Should return 404 Not found."""
-    ID = "does-not-exist"
+    test_a_id = "does-not-exist"
     mocker.patch(
         "photo_service.adapters.albums_adapter.AlbumsAdapter.get_album_by_id",
         return_value=None,
@@ -497,16 +504,16 @@ async def test_update_album_not_found(
         hdrs.AUTHORIZATION: f"Bearer {token}",
     }
     request_body = {
-        "id": ID,
+        "id": test_a_id,
         "g_id": "google_album_id",
         "place": "Oslo Skagen sprint Oppdatert",
     }
 
-    ID = "does-not-exist"
+    test_a_id = "does-not-exist"
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
-        resp = await client.put(f"/albums/{ID}", headers=headers, json=request_body)
-        assert resp.status == 404
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
+        resp = await client.put(f"/albums/{test_a_id}", headers=headers, json=request_body)
+        assert resp.status == HTTPStatus.NOT_FOUND
 
 
 @pytest.mark.integration
@@ -514,7 +521,7 @@ async def test_delete_album_not_found(
     client: _TestClient, mocker: MockFixture, token: MockFixture
 ) -> None:
     """Should return 404 Not found."""
-    ID = "does-not-exist"
+    test_a_id = "does-not-exist"
     mocker.patch(
         "photo_service.adapters.albums_adapter.AlbumsAdapter.get_album_by_id",
         return_value=None,
@@ -528,6 +535,6 @@ async def test_delete_album_not_found(
         hdrs.AUTHORIZATION: f"Bearer {token}",
     }
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
-        resp = await client.delete(f"/albums/{ID}", headers=headers)
-        assert resp.status == 404
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
+        resp = await client.delete(f"/albums/{test_a_id}", headers=headers)
+        assert resp.status == HTTPStatus.NOT_FOUND

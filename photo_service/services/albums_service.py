@@ -1,20 +1,21 @@
 """Module for albums service."""
 
 import logging
-from typing import Any, List, Optional
 import uuid
+from typing import Any
 
 from photo_service.adapters import AlbumsAdapter
 from photo_service.models import Album
-from .exceptions import IllegalValueException
+
+from .exceptions import IllegalValueError
 
 
 def create_id() -> str:  # pragma: no cover
-    """Creates an uuid."""
+    """Create an uuid."""
     return str(uuid.uuid4())
 
 
-class AlbumNotFoundException(Exception):
+class AlbumNotFoundError(Exception):
     """Class representing custom exception for fetch method."""
 
     def __init__(self, message: str) -> None:
@@ -27,16 +28,13 @@ class AlbumsService:
     """Class representing a service for albums."""
 
     @classmethod
-    async def get_all_albums(cls: Any, db: Any) -> List[Album]:
+    async def get_all_albums(cls: Any, db: Any) -> list[Album]:
         """Get all albums function."""
-        albums: List[Album] = []
         _albums = await AlbumsAdapter.get_all_albums(db)
-        for e in _albums:
-            albums.append(Album.from_dict(e))
-        return albums
+        return [Album.from_dict(e) for e in _albums]
 
     @classmethod
-    async def create_album(cls: Any, db: Any, album: Album) -> Optional[str]:
+    async def create_album(cls: Any, db: Any, album: Album) -> str | None:
         """Create album function.
 
         Args:
@@ -47,20 +45,22 @@ class AlbumsService:
             Optional[str]: The id of the created album. None otherwise.
 
         Raises:
-            IllegalValueException: input object has illegal values
+            IllegalValueError: input object has illegal values
+
         """
         # Validation:
         if album.id:
-            raise IllegalValueException("Cannot create album with input id.") from None
+            err_msg = "Cannot create album with input id."
+            raise IllegalValueError(err_msg) from None
         # create id
-        id = create_id()
-        album.id = id
+        a_id = create_id()
+        album.id = a_id
         # insert new album
         new_album = album.to_dict()
         result = await AlbumsAdapter.create_album(db, new_album)
-        logging.debug(f"inserted album with id: {id}")
+        logging.debug(f"inserted album with id: {a_id}")
         if result:
-            return id
+            return a_id
         return None
 
     @classmethod
@@ -70,38 +70,41 @@ class AlbumsService:
         # return the document if found:
         if album:
             return Album.from_dict(album)
-        raise AlbumNotFoundException(f"Album with g_id {g_id} not found") from None
+        err_msg = f"Album with id {g_id} not found"
+        raise AlbumNotFoundError(err_msg) from None
 
     @classmethod
-    async def get_album_by_id(cls: Any, db: Any, id: str) -> Album:
+    async def get_album_by_id(cls: Any, db: Any, a_id: str) -> Album:
         """Get album function."""
-        album = await AlbumsAdapter.get_album_by_id(db, id)
+        album = await AlbumsAdapter.get_album_by_id(db, a_id)
         # return the document if found:
         if album:
             return Album.from_dict(album)
-        raise AlbumNotFoundException(f"Album with id {id} not found") from None
+        err_msg = f"Album with id {a_id} not found"
+        raise AlbumNotFoundError(err_msg) from None
 
     @classmethod
-    async def update_album(cls: Any, db: Any, id: str, album: Album) -> Optional[str]:
+    async def update_album(cls: Any, db: Any, a_id: str, album: Album) -> str | None:
         """Get album function."""
         # get old document
-        old_album = await AlbumsAdapter.get_album_by_id(db, id)
+        old_album = await AlbumsAdapter.get_album_by_id(db, a_id)
         # update the album if found:
         if old_album:
             if album.id != old_album["id"]:
-                raise IllegalValueException("Cannot change id for album.") from None
+                err_msg = "Cannot change id for album."
+                raise IllegalValueError(err_msg) from None
             new_album = album.to_dict()
-            result = await AlbumsAdapter.update_album(db, id, new_album)
-            return result
-        raise AlbumNotFoundException(f"Album with id {id} not found.") from None
+            return await AlbumsAdapter.update_album(db, a_id, new_album)
+        err_msg = f"Album with id {a_id} not found"
+        raise AlbumNotFoundError(err_msg) from None
 
     @classmethod
-    async def delete_album(cls: Any, db: Any, id: str) -> Optional[str]:
+    async def delete_album(cls: Any, db: Any, a_id: str) -> str | None:
         """Get album function."""
         # get old document
-        album = await AlbumsAdapter.get_album_by_id(db, id)
+        album = await AlbumsAdapter.get_album_by_id(db, a_id)
         # delete the document if found:
         if album:
-            result = await AlbumsAdapter.delete_album(db, id)
-            return result
-        raise AlbumNotFoundException(f"Album with id {id} not found") from None
+            return await AlbumsAdapter.delete_album(db, a_id)
+        err_msg = f"Album with id {a_id} not found"
+        raise AlbumNotFoundError(err_msg) from None

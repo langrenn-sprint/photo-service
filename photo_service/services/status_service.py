@@ -1,20 +1,21 @@
 """Module for status service."""
 
 import logging
-from typing import Any, List, Optional
 import uuid
+from typing import Any
 
 from photo_service.adapters import StatusAdapter
 from photo_service.models import Status
-from .exceptions import IllegalValueException
+
+from .exceptions import IllegalValueError
 
 
 def create_id() -> str:  # pragma: no cover
-    """Creates an uuid."""
+    """Create an uuid."""
     return str(uuid.uuid4())
 
 
-class StatusNotFoundException(Exception):
+class StatusNotFoundError(Exception):
     """Class representing custom exception for fetch method."""
 
     def __init__(self, message: str) -> None:
@@ -27,7 +28,7 @@ class StatusService:
     """Class representing a service for status."""
 
     @classmethod
-    async def create_status(cls: Any, db: Any, status: Status) -> Optional[str]:
+    async def create_status(cls: Any, db: Any, status: Status) -> str | None:
         """Create status function.
 
         Args:
@@ -38,51 +39,47 @@ class StatusService:
             Optional[str]: The id of the created status. None otherwise.
 
         Raises:
-            IllegalValueException: input object has illegal values
+            IllegalValueError: input object has illegal values
+
         """
         # Validation:
         if status.id:
-            raise IllegalValueException("Cannot create status with input id.") from None
+            err_msg = "Cannot create status with input id."
+            raise IllegalValueError(err_msg) from None
         # create id
-        id = create_id()
-        status.id = id
+        s_id = create_id()
+        status.id = s_id
         # insert new status
         new_status = status.to_dict()
         result = await StatusAdapter.create_status(db, new_status)
-        logging.debug(f"inserted status with id: {id}")
+        logging.debug(f"inserted status with id: {s_id}")
         if result:
-            return id
+            return s_id
         return None
 
     @classmethod
     async def get_all_status(
         cls: Any, db: Any, event_id: str, count: int
-    ) -> List[Status]:
+    ) -> list[Status]:
         """Get all status function."""
-        status_list: List[Status] = []
         _status = await StatusAdapter.get_all_status(db, event_id, count)
-        for e in _status:
-            status_list.append(Status.from_dict(e))
-        return status_list
+        return [Status.from_dict(e) for e in _status]
 
     @classmethod
     async def get_all_status_by_type(
-        cls: Any, db: Any, event_id: str, type: str, count: int
-    ) -> List[Status]:
+        cls: Any, db: Any, event_id: str, status_type: str, count: int
+    ) -> list[Status]:
         """Get status function."""
-        status_list: List[Status] = []
-        _status = await StatusAdapter.get_all_status_by_type(db, event_id, type, count)
-        for e in _status:
-            status_list.append(Status.from_dict(e))
-        return status_list
+        _status = await StatusAdapter.get_all_status_by_type(db, event_id, status_type, count)
+        return [Status.from_dict(e) for e in _status]
 
     @classmethod
-    async def delete_status(cls: Any, db: Any, id: str) -> Optional[str]:
+    async def delete_status(cls: Any, db: Any, c_id: str) -> str | None:
         """Get status function."""
         # get old document
-        status = await StatusAdapter.get_status_by_id(db, id)
+        status = await StatusAdapter.get_status_by_id(db, c_id)
         # delete the document if found:
         if status:
-            result = await StatusAdapter.delete_status(db, id)
-            return result
-        raise StatusNotFoundException(f"Status with id {id} not found") from None
+            return await StatusAdapter.delete_status(db, c_id)
+        err_msg = f"Status with id {c_id} not found"
+        raise StatusNotFoundError(err_msg) from None

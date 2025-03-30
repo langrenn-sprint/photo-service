@@ -7,6 +7,7 @@ import os
 from aiohttp import hdrs
 from aiohttp.web import (
     HTTPBadRequest,
+    HTTPForbidden,
     HTTPNotFound,
     HTTPUnprocessableEntity,
     Response,
@@ -18,7 +19,7 @@ from multidict import MultiDict
 from photo_service.adapters import UsersAdapter
 from photo_service.models import Status
 from photo_service.services import (
-    IllegalValueException,
+    IllegalValueError,
     StatusService,
 )
 from photo_service.utils.jwt_utils import extract_token_from_request
@@ -42,17 +43,15 @@ class StatusView(View):
         except Exception:
             count = 25  # default value.
         try:
-            type = self.request.rel_url.query["type"]
+            status_type = self.request.rel_url.query["type"]
             status = await StatusService.get_all_status_by_type(
-                db, event_id, type, count
+                db, event_id, status_type, count
             )
         except Exception:
             status = await StatusService.get_all_status(db, event_id, count)
 
-        list = []
-        for _e in status:
-            list.append(_e.to_dict())
-        body = json.dumps(list, default=str, ensure_ascii=False)
+        _list = [_e.to_dict() for _e in status]
+        body = json.dumps(_list, default=str, ensure_ascii=False)
         return Response(status=200, body=body, content_type="application/json")
 
     async def post(self) -> Response:
@@ -62,7 +61,7 @@ class StatusView(View):
         try:
             await UsersAdapter.authorize(token, roles=["admin", "status-admin"])
         except Exception as e:
-            raise e from e
+            raise HTTPForbidden(reason=str(e)) from e
 
         body = await self.request.json()
         logging.debug(f"Got create request for status {body} of type {type(body)}")
@@ -76,14 +75,14 @@ class StatusView(View):
 
         try:
             status_id = await StatusService.create_status(db, status)
-        except IllegalValueException as e:
+        except IllegalValueError as e:
             raise HTTPUnprocessableEntity(reason=str(e)) from e
         if status_id:
             logging.debug(f"inserted document with status_id {status_id}")
             headers = MultiDict([(hdrs.LOCATION, f"{BASE_URL}/status/{status_id}")])
 
             return Response(status=201, headers=headers)
-        raise HTTPBadRequest() from None
+        raise HTTPBadRequest from None
 
     async def delete(self) -> Response:
         """Delete route function."""
@@ -99,6 +98,6 @@ class StatusView(View):
 
         try:
             await StatusService.delete_status(db, status_id)
-        except IllegalValueException as e:
+        except IllegalValueError as e:
             raise HTTPNotFound(reason=str(e)) from e
         return Response(status=204)

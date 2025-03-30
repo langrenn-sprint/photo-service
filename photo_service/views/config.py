@@ -18,9 +18,9 @@ from multidict import MultiDict
 from photo_service.adapters import UsersAdapter
 from photo_service.models import Config
 from photo_service.services import (
-    ConfigNotFoundException,
+    ConfigNotFoundError,
     ConfigService,
-    IllegalValueException,
+    IllegalValueError,
 )
 from photo_service.utils.jwt_utils import extract_token_from_request
 
@@ -64,14 +64,14 @@ class ConfigView(View):
 
         try:
             config_id = await ConfigService.create_config(db, config)
-        except IllegalValueException as e:
+        except IllegalValueError as e:
             raise HTTPUnprocessableEntity(reason=str(e)) from e
         if config_id:
             logging.debug(f"inserted document with config_id {config_id}")
             headers = MultiDict([(hdrs.LOCATION, f"{BASE_URL}/config/{config_id}")])
 
             return Response(status=201, headers=headers)
-        raise HTTPBadRequest() from None
+        raise HTTPBadRequest from None
 
     async def put(self) -> Response:
         """Put route function."""
@@ -93,9 +93,9 @@ class ConfigView(View):
 
         try:
             await ConfigService.update_config(db, config)
-        except IllegalValueException as e:
+        except IllegalValueError as e:
             raise HTTPUnprocessableEntity(reason=str(e)) from e
-        except ConfigNotFoundException as e:
+        except ConfigNotFoundError as e:
             raise HTTPNotFound(reason=str(e)) from e
         return Response(status=204)
 
@@ -113,7 +113,7 @@ class ConfigView(View):
 
         try:
             await ConfigService.delete_config(db, config_id)
-        except IllegalValueException as e:
+        except IllegalValueError as e:
             raise HTTPNotFound(reason=str(e)) from e
         return Response(status=204)
 
@@ -130,8 +130,6 @@ class ConfigsView(View):
         else:
             configs = await ConfigService.get_all_configs(db, None)
 
-        list = []
-        for _e in configs:
-            list.append(_e.to_dict())
-        body = json.dumps(list, default=str, ensure_ascii=False)
+        _list = [_e.to_dict() for _e in configs]
+        body = json.dumps(_list, default=str, ensure_ascii=False)
         return Response(status=200, body=body, content_type="application/json")
