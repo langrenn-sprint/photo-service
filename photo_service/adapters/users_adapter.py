@@ -12,7 +12,7 @@ from aiohttp.web import (
 )
 
 USERS_HOST_SERVER = os.getenv("USERS_HOST_SERVER", "localhost")
-USERS_HOST_PORT = os.getenv("USERS_HOST_PORT", "8086")
+USERS_HOST_PORT = os.getenv("USERS_HOST_PORT", "8080")
 
 
 class UsersAdapter:

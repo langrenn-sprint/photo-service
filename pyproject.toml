@@ -26,6 +26,7 @@ dependencies = [
     "motor>=3.3.2",
     "multidict>=6.0.1",
     "python-dotenv>=1.0.0",
+    "python-json-logger>=3.2.1",
 ]
 [project.urls]
 Homepage = "https://github.com/langrenn-sprint/photo-service"
@@ -133,7 +134,6 @@ show_missing = true
 
 [tool.pytest.ini_options]
 env = [
-    "CONFIG=test",
     "JWT_SECRET=secret",
     "ADMIN_USERNAME=admin",
     "ADMIN_PASSWORD=password",
@@ -145,7 +145,7 @@ env = [
     "PHOTOS_HOST_SERVER=localhost",
     "PHOTOS_HOST_PORT=8080",
     "USERS_HOST_SERVER=localhost",
-    "USERS_HOST_PORT=8086",
+    "USERS_HOST_PORT=8080",
 ]
 
 asyncio_mode = "auto"
@@ -161,8 +161,8 @@ lint = { cmd = "uv run ruff check --fix" }
 pyright = { cmd = "uv run pyright" }
 check_deps = { cmd = "uv run deptry ." }
 audit = { cmd = "uv run pip-audit" }
-unit_test = { cmd = "uv run pytest -m unit", env = { "CONFIG" = "test" } }
-integration_test = { cmd = "uv run pytest -m integration -s --cov --cov-report=term-missing --cov-report=html:.htmlcov", env = { "CONFIG" = "test" } }
+unit_test = { cmd = "uv run pytest -m unit" }
+integration_test = { cmd = "uv run pytest -m integration -s --cov --cov-report=term-missing --cov-report=html:.htmlcov" }
 contract_test = { cmd = "uv run pytest -m contract -s" }
 release = { sequence = [
     "lint",

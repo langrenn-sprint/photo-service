@@ -15,7 +15,7 @@ from pytest_mock import MockFixture
 load_dotenv()
 
 USERS_HOST_SERVER = os.getenv("USERS_HOST_SERVER", "localhost")
-USERS_HOST_PORT = os.getenv("USERS_HOST_PORT", "8086")
+USERS_HOST_PORT = os.getenv("USERS_HOST_PORT", "8080")
 
 
 @pytest.fixture

@@ -5,24 +5,12 @@ import os
 
 from aiohttp import web
 
-CONFIG = os.getenv("CONFIG", "production")
-
 
 class Ready(web.View):
     """Class representing ready resource."""
 
     async def get(self) -> web.Response:
-        """Ready route function."""
-        if CONFIG in {"test", "dev"}:
-            pass
-        else:  # pragma: no cover
-            db = self.request.app["db"]
-            result = await db.command("ping")
-            logging.debug(f"result of db-ping: {result}")
-            if result["ok"] == 1:
-                return web.Response(text="OK")
-            raise web.HTTPInternalServerError from None
-
+        """Alive function."""
         return web.Response(text="OK")
 
 

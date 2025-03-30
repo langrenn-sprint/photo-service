@@ -17,4 +17,4 @@ RUN uv sync --frozen
 EXPOSE 8080
 
 # Run the application.
-CMD ["/app/.venv/bin/gunicorn", "photo_service:create_app",  "--config=photo_service/gunicorn_config.py", "--worker-class", "aiohttp.GunicornWebWorker"]
+CMD /app/.venv/bin/gunicorn "photo_service:create_app"  --config=photo_service/gunicorn_config.py --worker-class aiohttp.GunicornWebWorker

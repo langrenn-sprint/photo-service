@@ -1,9 +1,10 @@
 """Conftest module."""
 
-import time
 from http import HTTPStatus
+import os
 from os import environ as env
 from pathlib import Path
+import time
 from typing import Any
 
 import pytest
@@ -25,7 +26,7 @@ async def client(aiohttp_client: Any) -> _TestClient:
     return await aiohttp_client(app)
 
 
-def is_responsive(url: str) -> bool:
+def is_responsive(url: Any) -> Any:
     """Return true if response from service is 200."""
     url = f"{url}/ready"
     try:
@@ -34,8 +35,7 @@ def is_responsive(url: str) -> bool:
             time.sleep(2)  # sleep extra 2 sec
             return True
     except _ConnectionError:
-        pass
-    return False
+        return False
 
 
 @pytest.fixture(scope="session")
@@ -53,4 +53,10 @@ def http_service(docker_ip: Any, docker_services: Any) -> Any:
 @pytest.fixture(scope="session")
 def docker_compose_file(pytestconfig: Any) -> Any:
     """Override default location of docker-compose.yml file."""
-    return Path(str(pytestconfig.rootdir)) / "docker-compose.yml"
+    return os.path.join(str(pytestconfig.rootdir), "./", "docker-compose.yml")
+
+
+@pytest.fixture(scope="session")
+def docker_cleanup(pytestconfig: Any) -> Any:
+    """Override default location of docker-compose.yml file."""
+    return "stop"
