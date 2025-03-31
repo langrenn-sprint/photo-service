@@ -6,6 +6,7 @@ services:
     ports:
       - 8080:8080
     environment:
+      - JWT_SECRET=${JWT_SECRET}
       - ADMIN_USERNAME=${ADMIN_USERNAME}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - GOOGLE_PHOTO_SERVER=https://photoslibrary.googleapis.com/v1

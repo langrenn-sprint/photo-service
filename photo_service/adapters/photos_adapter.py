@@ -18,9 +18,10 @@ class PhotosAdapter(Adapter):
         cls: Any, db: Any, event_id: str
     ) -> list:  # pragma: no cover
         """Get all photos function."""
-        return await db.photos_collection.find(
+        cursor = db.photos_collection.find(
             {"event_id": event_id}
         ).sort("time", -1)
+        return await cursor.to_list(None)
 
     @classmethod
     async def get_photo_by_g_base_url(

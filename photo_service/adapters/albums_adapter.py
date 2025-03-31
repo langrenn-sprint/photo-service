@@ -16,7 +16,8 @@ class AlbumsAdapter(Adapter):
     @classmethod
     async def get_all_albums(cls: Any, db: Any) -> list:  # pragma: no cover
         """Get all albums function."""
-        return await db.albums_collection.find()
+        cursor = db.albums_collection.find()
+        return await cursor.to_list(None)
 
     @classmethod
     async def get_album_by_g_id(

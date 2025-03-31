@@ -110,9 +110,12 @@ async def test_get_all_albums(http_service: Any) -> None:
     """Should return OK and a list of albums as json."""
     url = f"{http_service}/albums"
 
-    session = ClientSession()
-    async with session.get(url) as response:
-        albums = await response.json()
+    async with ClientSession() as session:
+        headers = {
+            hdrs.CONTENT_TYPE: "application/json",
+        }
+        async with session.get(url, headers=headers) as response:
+            albums = await response.json()
     await session.close()
 
     assert response.status == HTTPStatus.OK
