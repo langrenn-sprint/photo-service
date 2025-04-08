@@ -112,3 +112,8 @@ To run tests with logging, do:
 ```Zsh
 % uv run pytest -m integration -- --log-cli-level=DEBUG
 ```
+To upgrade:
+
+```Zsh
+% uv sync --upgrade
+```
