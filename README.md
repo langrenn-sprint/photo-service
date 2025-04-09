@@ -68,6 +68,12 @@ source .venv/bin/activate
 % uv sync
 ```
 
+To upgrade:
+
+```Zsh
+% uv sync --upgrade
+```
+
 ## Running the API locally
 
 Start the server locally:

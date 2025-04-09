@@ -2,8 +2,6 @@
 
 from http import HTTPStatus
 import os
-from os import environ as env
-from pathlib import Path
 import time
 from typing import Any
 
@@ -16,7 +14,7 @@ from requests.exceptions import ConnectionError as _ConnectionError
 from photo_service import create_app
 
 load_dotenv()
-HOST_PORT = int(env.get("HOST_PORT", "8080"))
+HOST_PORT = int(os.getenv("HOST_PORT", "8080"))
 
 
 @pytest.fixture

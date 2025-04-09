@@ -7,7 +7,6 @@ from copy import deepcopy
 from http import HTTPStatus
 from typing import Any
 
-import jwt
 import motor.motor_asyncio
 import pytest
 from aiohttp import ClientSession, hdrs
