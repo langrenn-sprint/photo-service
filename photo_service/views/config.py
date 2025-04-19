@@ -39,7 +39,10 @@ class ConfigView(View):
         key = self.request.rel_url.query["key"]
         event_id = self.request.rel_url.query["eventId"]
 
-        config = await ConfigService.get_config_by_key(db, event_id, key)
+        try:
+            config = await ConfigService.get_config_by_key(db, event_id, key)
+        except ConfigNotFoundError as e:
+            raise HTTPNotFound(reason=str(e)) from e
         body = config.to_json()
         return Response(status=200, body=body, content_type="application/json")
 

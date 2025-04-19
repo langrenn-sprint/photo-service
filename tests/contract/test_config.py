@@ -92,3 +92,37 @@ async def test_unit_test_create_config(
             status = response.status
 
         assert status == HTTPStatus.CREATED
+
+
+@pytest.mark.contract
+@pytest.mark.asyncio
+async def test_get_config_by_key(
+    http_service: Any, token: MockFixture, config: dict
+) -> None:
+    """Should return OK and an photo as json."""
+    url = f"{http_service}/config?eventId=1e95458c-e000-4d8b-beda-f860c77fd758&key=photo_location"
+
+    async with ClientSession() as session:
+        async with session.get(url) as response:
+            ret_config = await response.json()
+
+    assert response.status == HTTPStatus.OK
+    assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
+    assert type(ret_config) is dict
+    assert ret_config["value"] == config["value"]
+
+
+@pytest.mark.contract
+@pytest.mark.asyncio
+async def test_get_config_by_key_not_found(
+    http_service: Any, token: MockFixture, config: dict
+) -> None:
+    """Should return OK and an photo as json."""
+    url = f"{http_service}/config?eventId=1e95458c-e000-4d8b-beda-f860c77fd758&key=invalid_key"
+
+    async with ClientSession() as session:
+        async with session.get(url) as response:
+            ret_config = await response.json()
+
+    assert response.status == HTTPStatus.NOT_FOUND
+    assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
