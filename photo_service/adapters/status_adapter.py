@@ -25,9 +25,10 @@ class StatusAdapter(Adapter):
     ) -> list[dict]:  # pragma: no cover
         """Get latest status function."""
         try:
-            return await db.status_collection.find(
+            cursor = db.status_collection.find(
                 {"event_id": event_id}
             ).sort("time", -1).limit(count).to_list(None)
+            return await cursor.to_list(None)
         except Exception:
             err_msg = f"Error occurred while fetching status by event: {event_id}"
             logging.exception(err_msg)
@@ -39,9 +40,10 @@ class StatusAdapter(Adapter):
     ) -> list[dict]:  # pragma: no cover
         """Get latest status function."""
         try:
-            return await db.status_collection.find(
+            cursor = db.status_collection.find(
                 {"type": status_type, "event_id": event_id}
             ).sort("time", -1).limit(count).to_list(None)
+            return await cursor.to_list(None)
         except Exception:
             err_msg = f"Error occurred while fetching status by type: {status_type}"
             logging.exception(err_msg)
