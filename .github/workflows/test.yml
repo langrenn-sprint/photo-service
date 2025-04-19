@@ -39,4 +39,4 @@ jobs:
           DB_USER: ${{ secrets.DB_USER }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           USERS_HOST_SERVER: localhost
-          USERS_HOST_PORT: 8080
+          USERS_HOST_PORT: 8086
