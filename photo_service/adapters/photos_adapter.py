@@ -47,36 +47,40 @@ class PhotosAdapter(Adapter):
         cls: Any, db: Any, race_id: str
     ) -> list:  # pragma: no cover
         """Get all photos by race_id function."""
-        return await db.photos_collection.find(
+        cursor = db.photos_collection.find(
             {"race_id": race_id}
         ).sort("time", -1)
+        return await cursor.to_list(None)
 
     @classmethod
     async def get_photos_by_raceclass(
         cls: Any, db: Any, event_id: str, raceclass: str
     ) -> list:  # pragma: no cover
         """Get all photos by raceclass function."""
-        return await db.photos_collection.find(
+        cursor = db.photos_collection.find(
             {"raceclass": raceclass, "event_id": event_id}
         ).sort("time", -1)
+        return await cursor.to_list(None)
 
     @classmethod
     async def get_photos_starred_by_raceclass(
         cls: Any, db: Any, event_id: str, raceclass: str
     ) -> list:  # pragma: no cover
         """Get all photos by raceclass function."""
-        return await db.photos_collection.find(
+        cursor = db.photos_collection.find(
             {"starred": True, "raceclass": raceclass, "event_id": event_id}
         ).sort("time", -1)
+        return await cursor.to_list(None)
 
     @classmethod
     async def get_photos_starred(
         cls: Any, db: Any, event_id: str
     ) -> list:  # pragma: no cover
         """Get all photos by raceclass function."""
-        return await db.photos_collection.find(
+        cursor = db.photos_collection.find(
             {"starred": True, "event_id": event_id}
         ).sort("time", -1)
+        return await cursor.to_list(None)
 
     @classmethod
     async def update_photo(

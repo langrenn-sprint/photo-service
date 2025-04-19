@@ -16,16 +16,16 @@ class ConfigAdapter(Adapter):
     @classmethod
     async def get_all_configs(cls: Any, db: Any) -> list[dict]:  # pragma: no cover
         """Get configs function."""
-        return await db.configs_collection.find()
+        cursor = db.configs_collection.find()
+        return await cursor.to_list(None)
 
     @classmethod
     async def get_all_configs_by_event(
         cls: Any, db: Any, event_id: str
     ) -> list[dict]:  # pragma: no cover
         """Get configs function."""
-        return await db.configs_collection.find(
-            {"event_id": event_id}
-        )
+        cursor = db.configs_collection.find({"event_id": event_id})
+        return await cursor.to_list(None)
 
     @classmethod
     async def get_config_by_key(
