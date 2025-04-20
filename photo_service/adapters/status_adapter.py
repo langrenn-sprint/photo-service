@@ -27,7 +27,7 @@ class StatusAdapter(Adapter):
         try:
             cursor = db.status_collection.find(
                 {"event_id": event_id}
-            ).sort("time", -1).limit(count).to_list(None)
+            ).sort("time", -1).limit(count)
             return await cursor.to_list(None)
         except Exception:
             err_msg = f"Error occurred while fetching status by event: {event_id}"
@@ -42,7 +42,7 @@ class StatusAdapter(Adapter):
         try:
             cursor = db.status_collection.find(
                 {"type": status_type, "event_id": event_id}
-            ).sort("time", -1).limit(count).to_list(None)
+            ).sort("time", -1).limit(count)
             return await cursor.to_list(None)
         except Exception:
             err_msg = f"Error occurred while fetching status by type: {status_type}"
