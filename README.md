@@ -58,7 +58,8 @@ Install [uv](https://docs.astral.sh/uv/), e.g.:
 
 Install: curl <https://pyenv.run> | bash
 Create: python -m venv .venv (replace .venv with your preferred name)
-Install python 3.12: pyenv install 3.12
+Install python 3.13: pyenv install 3.13
+
 Activate:
 source .venv/bin/activate
 

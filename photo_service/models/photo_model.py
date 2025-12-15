@@ -17,7 +17,7 @@ class Photo(DataClassJsonMixin):
     confidence: int = 0
     event_id: str | None = field(default=None)
     creation_time: time | None = field(default=None)
-    information: str | None = field(default=None)
+    information: dict | None = field(default=None)
     id: str | None = field(default=None)
     race_id: str | None = field(default=None)
     raceclass: str | None = field(default=None)
