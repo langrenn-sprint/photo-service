@@ -73,7 +73,7 @@ async def photo() -> dict:
         "confidence": 0,
         "event_id": "1e95458c-e000-4d8b-beda-f860c77fd758",
         "creation_time": "2022-03-05T06:41:52",
-        "information": "Test photo for sprint",
+        "information": {"description": "Test photo for sprint"},
         "race_id": "1e95458c-e000-4d8b-beda-f860c77fd758",
         "raceclass": "K-Jr",
         "biblist": [2, 4],
