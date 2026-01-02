@@ -14,4 +14,5 @@ class Status(DataClassJsonMixin):
     time: time
     type: str
     message: str
+    details: dict | None = field(default=None)
     id: str | None = field(default=None)

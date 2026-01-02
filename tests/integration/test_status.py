@@ -44,6 +44,7 @@ async def status() -> dict:
         "time": "2022-09-25T16:41:52",
         "type": "video_status",
         "message": "2022 Ragde-sprinten",
+        "details": {"info1": "detail1", "info2": "detail2"}
     }
 
 
