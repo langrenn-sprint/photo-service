@@ -1,6 +1,5 @@
 """Utilities module for events resources."""
 
-
 from aiohttp.web import Request
 
 

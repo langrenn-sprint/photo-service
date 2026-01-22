@@ -37,7 +37,9 @@ class ConfigAdapter(Adapter):
         )
 
     @classmethod
-    async def get_config_by_id(cls: Any, db: Any, c_id: str) -> dict:  # pragma: no cover
+    async def get_config_by_id(
+        cls: Any, db: Any, c_id: str
+    ) -> dict:  # pragma: no cover
         """Get config function."""
         return await db.configs_collection.find_one({"id": c_id})
 

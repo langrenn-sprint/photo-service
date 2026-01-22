@@ -1,4 +1,4 @@
-"""Contract test cases for ping."""
+"""Contract test cases for service instances."""
 
 import logging
 import os
@@ -7,6 +7,7 @@ from copy import deepcopy
 from http import HTTPStatus
 from typing import Any
 
+import jwt
 import motor.motor_asyncio
 import pytest
 from aiohttp import ClientSession, hdrs
@@ -23,7 +24,7 @@ DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 
 
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(scope="module")
 async def token(http_service: Any) -> str:
     """Create a valid token."""
     url = f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/login"
@@ -43,7 +44,7 @@ async def token(http_service: Any) -> str:
 
 @pytest.fixture(scope="module", autouse=True)
 async def clear_db() -> AsyncGenerator:
-    """Delete all events before we start."""
+    """Delete all service instances before we start."""
     mongo = motor.motor_asyncio.AsyncIOMotorClient(
         host=DB_HOST, port=DB_PORT, username=DB_USER, password=DB_PASSWORD
     )
@@ -63,29 +64,28 @@ async def clear_db() -> AsyncGenerator:
 
 
 @pytest.fixture(scope="module")
-async def album() -> dict:
-    """Album object for testing."""
+async def service_instance() -> dict:
+    """Service instance object for testing."""
     return {
-        "camera_position": "right",
-        "changelog": [],
+        "service_type": "video-service",
+        "instance_name": "video-service-1",
+        "status": "running",
+        "host_name": "localhost",
+        "port": 8081,
         "event_id": "1e95458c-e000-4d8b-beda-f860c77fd758",
-        "g_id": "APU9jkgGt20Pq1SHqEjC1TiOuOliKbH5P64k_roOwf_sXKuY57KFCCQ2g9UbOwRUg6OSVG4C9GZK",
-        "is_photo_finish": True,
-        "is_start_registration": False,
-        "last_sync_time": "2022-09-25T16:41:52",
-        "place": "finish",
-        "sync_on": False,
-        "title": "2022 Ragde-sprinten",
-        "cover_photo_url": "",
+        "started_at": "2024-03-05T06:41:52",
+        "last_heartbeat": "2024-03-05T06:45:52",
+        "metadata": {"version": "1.0.0"},
     }
 
 
 @pytest.mark.contract
 @pytest.mark.asyncio
-async def test_create_album(
+async def test_create_service_instance(
     http_service: Any,
     token: MockFixture,
-    album: dict,
+    clear_db: AsyncGenerator,
+    service_instance: dict,
 ) -> None:
     """Should return Created, location header and no body."""
     async with ClientSession() as session:
@@ -93,62 +93,71 @@ async def test_create_album(
             hdrs.CONTENT_TYPE: "application/json",
             hdrs.AUTHORIZATION: f"Bearer {token}",
         }
-        url = f"{http_service}/albums"
-        request_body = album
+        url = f"{http_service}/service-instances"
+        request_body = service_instance
 
         async with session.post(url, headers=headers, json=request_body) as response:
             status = response.status
 
         assert status == HTTPStatus.CREATED
-        assert "/albums/" in response.headers[hdrs.LOCATION]
+        assert "/service-instances/" in response.headers[hdrs.LOCATION]
 
 
 @pytest.mark.contract
 @pytest.mark.asyncio
-async def test_get_all_albums(http_service: Any) -> None:
-    """Should return OK and a list of albums as json."""
-    url = f"{http_service}/albums"
+async def test_get_all_service_instances(http_service: Any, token: MockFixture) -> None:
+    """Should return OK and a list of service instances as json."""
+    url = (
+        f"{http_service}/service-instances?eventId=1e95458c-e000-4d8b-beda-f860c77fd758"
+    )
 
-    async with ClientSession() as session:
-        headers = {
-            hdrs.CONTENT_TYPE: "application/json",
-        }
-        async with session.get(url, headers=headers) as response:
-            albums = await response.json()
+    session = ClientSession()
+    async with session.get(url) as response:
+        service_instances = await response.json()
     await session.close()
 
     assert response.status == HTTPStatus.OK
     assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
-    assert type(albums) is list
-    assert len(albums) > 0
+    assert type(service_instances) is list
+    assert len(service_instances) > 0
 
 
 @pytest.mark.contract
 @pytest.mark.asyncio
-async def test_get_album_by_id(http_service: Any, album: dict) -> None:
-    """Should return OK and an album as json."""
-    url = f"{http_service}/albums"
+async def test_get_service_instance_by_id(
+    http_service: Any, token: MockFixture, service_instance: dict
+) -> None:
+    """Should return OK and a service instance as json."""
+    url = (
+        f"{http_service}/service-instances?eventId=1e95458c-e000-4d8b-beda-f860c77fd758"
+    )
 
     async with ClientSession() as session:
         async with session.get(url) as response:
-            albums = await response.json()
-        a_id = albums[0]["id"]
-        url = f"{url}/{a_id}"
+            service_instances = await response.json()
+        si_id = service_instances[0]["id"]
+        url = f"{http_service}/service-instances/{si_id}"
         async with session.get(url) as response:
             body = await response.json()
 
     assert response.status == HTTPStatus.OK
     assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
-    assert type(album) is dict
-    assert body["id"] == a_id
-    assert body["last_sync_time"] == album["last_sync_time"]
+    assert type(service_instance) is dict
+    assert body["id"] == si_id
+    assert body["service_type"] == service_instance["service_type"]
+    assert body["instance_name"] == service_instance["instance_name"]
+    assert body["status"] == service_instance["status"]
 
 
 @pytest.mark.contract
 @pytest.mark.asyncio
-async def test_update_album(http_service: Any, token: MockFixture, album: dict) -> None:
+async def test_update_service_instance(
+    http_service: Any, token: MockFixture, service_instance: dict
+) -> None:
     """Should return No Content."""
-    url = f"{http_service}/albums"
+    url = (
+        f"{http_service}/service-instances?eventId=1e95458c-e000-4d8b-beda-f860c77fd758"
+    )
     headers = {
         hdrs.CONTENT_TYPE: "application/json",
         hdrs.AUTHORIZATION: f"Bearer {token}",
@@ -156,41 +165,48 @@ async def test_update_album(http_service: Any, token: MockFixture, album: dict) 
 
     async with ClientSession() as session:
         async with session.get(url) as response:
-            albums = await response.json()
-        a_id = albums[0]["id"]
-        g_id = albums[0]["g_id"]
-        url = f"{url}/{a_id}"
+            service_instances = await response.json()
+        si_id = service_instances[0]["id"]
+        url = f"{http_service}/service-instances/{si_id}"
 
-        request_body = deepcopy(album)
-        new_name = "Oslo Skagen sprint updated"
-        request_body["id"] = a_id
-        request_body["g_id"] = g_id
-        request_body["place"] = new_name
+        request_body = deepcopy(service_instance)
+        new_status = "error"
+        request_body["id"] = si_id
+        request_body["status"] = new_status
 
         async with session.put(url, headers=headers, json=request_body) as response:
             assert response.status == HTTPStatus.NO_CONTENT
 
         async with session.get(url) as response:
             assert response.status == HTTPStatus.OK
-            updated_album = await response.json()
-            assert updated_album["g_id"] == album["g_id"]
-            assert updated_album["place"] == new_name
+            updated_service_instance = await response.json()
+            assert updated_service_instance["status"] == new_status
+            assert (
+                updated_service_instance["service_type"]
+                == service_instance["service_type"]
+            )
+            assert (
+                updated_service_instance["instance_name"]
+                == service_instance["instance_name"]
+            )
 
 
 @pytest.mark.contract
 @pytest.mark.asyncio
-async def test_delete_album(http_service: Any, token: MockFixture) -> None:
+async def test_delete_service_instance(http_service: Any, token: MockFixture) -> None:
     """Should return No Content."""
-    url = f"{http_service}/albums"
+    url = (
+        f"{http_service}/service-instances?eventId=1e95458c-e000-4d8b-beda-f860c77fd758"
+    )
     headers = {
         hdrs.AUTHORIZATION: f"Bearer {token}",
     }
 
     async with ClientSession() as session:
         async with session.get(url) as response:
-            albums = await response.json()
-        a_id = albums[0]["id"]
-        url = f"{url}/{a_id}"
+            service_instances = await response.json()
+        si_id = service_instances[0]["id"]
+        url = f"{http_service}/service-instances/{si_id}"
         async with session.delete(url, headers=headers) as response:
             assert response.status == HTTPStatus.NO_CONTENT
 

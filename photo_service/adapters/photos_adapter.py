@@ -18,9 +18,7 @@ class PhotosAdapter(Adapter):
         cls: Any, db: Any, event_id: str
     ) -> list:  # pragma: no cover
         """Get all photos function."""
-        cursor = db.photos_collection.find(
-            {"event_id": event_id}
-        ).sort("time", -1)
+        cursor = db.photos_collection.find({"event_id": event_id}).sort("time", -1)
         return await cursor.to_list(None)
 
     @classmethod
@@ -47,9 +45,7 @@ class PhotosAdapter(Adapter):
         cls: Any, db: Any, race_id: str
     ) -> list:  # pragma: no cover
         """Get all photos by race_id function."""
-        cursor = db.photos_collection.find(
-            {"race_id": race_id}
-        ).sort("time", -1)
+        cursor = db.photos_collection.find({"race_id": race_id}).sort("time", -1)
         return await cursor.to_list(None)
 
     @classmethod

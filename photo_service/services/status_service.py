@@ -70,7 +70,9 @@ class StatusService:
         cls: Any, db: Any, event_id: str, status_type: str, count: int
     ) -> list[Status]:
         """Get status function."""
-        _status = await StatusAdapter.get_all_status_by_type(db, event_id, status_type, count)
+        _status = await StatusAdapter.get_all_status_by_type(
+            db, event_id, status_type, count
+        )
         return [Status.from_dict(e) for e in _status]
 
     @classmethod

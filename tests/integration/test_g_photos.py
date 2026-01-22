@@ -38,6 +38,7 @@ def g_photo() -> dict:
     with file_path.open() as file:
         return json.load(file)
 
+
 @pytest.mark.integration
 async def test_get_g_photos(
     client: _TestClient, mocker: MockFixture, token: MockFixture, g_photo: dict

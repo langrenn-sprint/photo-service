@@ -167,7 +167,9 @@ async def test_update_album_by_id(
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
 
-        resp = await client.put(f"/albums/{test_a_id}", headers=headers, json=request_body)
+        resp = await client.put(
+            f"/albums/{test_a_id}", headers=headers, json=request_body
+        )
         assert resp.status == HTTPStatus.NO_CONTENT
 
 
@@ -330,7 +332,9 @@ async def test_update_album_by_id_missing_mandatory_property(
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
 
-        resp = await client.put(f"/albums/{test_a_id}", headers=headers, json=request_body)
+        resp = await client.put(
+            f"/albums/{test_a_id}", headers=headers, json=request_body
+        )
         assert resp.status == HTTPStatus.UNPROCESSABLE_ENTITY
 
 
@@ -358,7 +362,9 @@ async def test_update_album_by_id_different_id_in_body(
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
 
-        resp = await client.put(f"/albums/{test_a_id}", headers=headers, json=request_body)
+        resp = await client.put(
+            f"/albums/{test_a_id}", headers=headers, json=request_body
+        )
         assert resp.status == HTTPStatus.UNPROCESSABLE_ENTITY
 
 
@@ -414,7 +420,9 @@ async def test_update_album_by_id_no_authorization(
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=401)
 
-        resp = await client.put(f"/albums/{test_a_id}", headers=headers, json=request_body)
+        resp = await client.put(
+            f"/albums/{test_a_id}", headers=headers, json=request_body
+        )
         assert resp.status == HTTPStatus.UNAUTHORIZED
 
 
@@ -512,7 +520,9 @@ async def test_update_album_not_found(
     test_a_id = "does-not-exist"
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
-        resp = await client.put(f"/albums/{test_a_id}", headers=headers, json=request_body)
+        resp = await client.put(
+            f"/albums/{test_a_id}", headers=headers, json=request_body
+        )
         assert resp.status == HTTPStatus.NOT_FOUND
 
 
