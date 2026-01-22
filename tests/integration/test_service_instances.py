@@ -45,7 +45,7 @@ async def service_instance() -> dict:
         "instance_name": "video-service-1",
         "status": "running",
         "host_name": "localhost",
-        "port": 8081,
+        "action": "start",
         "event_id": "1e95458c-e000-4d8b-beda-f860c77fd758",
         "started_at": "2024-03-05T06:41:52",
         "last_heartbeat": "2024-03-05T06:45:52",
@@ -162,7 +162,7 @@ async def test_get_all_service_instances(
                 "instance_name": "video-service-1",
                 "status": "running",
                 "host_name": "localhost",
-                "port": 8081,
+                "action": "start",
             }
         ],
     )
@@ -197,7 +197,7 @@ async def test_get_service_instances_by_service_type(
                 "instance_name": "video-service-1",
                 "status": "running",
                 "host_name": "localhost",
-                "port": 8081,
+                "action": "start",
             }
         ],
     )
@@ -232,7 +232,7 @@ async def test_get_service_instances_by_status(
                 "instance_name": "video-service-1",
                 "status": status,
                 "host_name": "localhost",
-                "port": 8081,
+                "action": "start",
             }
         ],
     )
@@ -264,7 +264,7 @@ async def test_delete_service_instance_by_id(
             "instance_name": "video-service-1",
             "status": "running",
             "host_name": "localhost",
-            "port": 8081,
+            "action": "start",
         },
     )
     mocker.patch(
@@ -334,7 +334,7 @@ async def test_create_service_instance_with_input_id(
         "instance_name": "video-service-1",
         "status": "running",
         "host_name": "localhost",
-        "port": 8081,
+        "action": "start",
     }
     headers = {
         hdrs.CONTENT_TYPE: "application/json",
@@ -367,7 +367,7 @@ async def test_create_service_instance_adapter_fails(
         "instance_name": "video-service-1",
         "status": "running",
         "host_name": "localhost",
-        "port": 8081,
+        "action": "start",
     }
     headers = {
         hdrs.CONTENT_TYPE: "application/json",
@@ -396,7 +396,7 @@ async def test_update_service_instance_by_id_missing_mandatory_property(
             "instance_name": "video-service-1",
             "status": "running",
             "host_name": "localhost",
-            "port": 8081,
+            "action": "start",
         },
     )
     mocker.patch(
@@ -433,7 +433,7 @@ async def test_update_service_instance_by_id_different_id_in_body(
             "instance_name": "video-service-1",
             "status": "running",
             "host_name": "localhost",
-            "port": 8081,
+            "action": "start",
         },
     )
     mocker.patch(
@@ -451,7 +451,7 @@ async def test_update_service_instance_by_id_different_id_in_body(
         "instance_name": "video-service-1",
         "status": "running",
         "host_name": "localhost",
-        "port": 8081,
+        "action": "start",
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
@@ -486,7 +486,7 @@ async def test_create_service_instance_no_authorization(
         "instance_name": "video-service-1",
         "status": "running",
         "host_name": "localhost",
-        "port": 8081,
+        "action": "start",
     }
     headers = MultiDict([(hdrs.CONTENT_TYPE, "application/json")])
 
@@ -513,7 +513,7 @@ async def test_update_service_instance_by_id_no_authorization(
             "instance_name": "video-service-1",
             "status": "running",
             "host_name": "localhost",
-            "port": 8081,
+            "action": "start",
         },
     )
     mocker.patch(
@@ -531,7 +531,7 @@ async def test_update_service_instance_by_id_no_authorization(
         "instance_name": "video-service-1",
         "status": "running",
         "host_name": "localhost",
-        "port": 8081,
+        "action": "start",
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
@@ -581,7 +581,7 @@ async def test_create_service_instance_insufficient_role(
         "instance_name": "video-service-1",
         "status": "running",
         "host_name": "localhost",
-        "port": 8081,
+        "action": "start",
     }
     headers = {
         hdrs.CONTENT_TYPE: "application/json",
@@ -642,7 +642,7 @@ async def test_update_service_instance_not_found(
         "instance_name": "video-service-1",
         "status": "running",
         "host_name": "localhost",
-        "port": 8081,
+        "action": "start",
     }
 
     si_id = "does-not-exist"

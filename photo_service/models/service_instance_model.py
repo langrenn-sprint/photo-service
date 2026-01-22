@@ -25,7 +25,7 @@ class ServiceInstance(DataClassJsonMixin):
     instance_name: str
     status: str  # e.g., "running", "waiting", "error"
     host_name: str
-    port: int
+    action: str
     event_id: str | None = field(default=None)
     id: str | None = field(default=None)
     started_at: datetime | None = field(

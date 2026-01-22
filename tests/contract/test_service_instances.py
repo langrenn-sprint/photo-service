@@ -71,7 +71,7 @@ async def service_instance() -> dict:
         "instance_name": "video-service-1",
         "status": "running",
         "host_name": "localhost",
-        "port": 8081,
+        "action": "start",
         "event_id": "1e95458c-e000-4d8b-beda-f860c77fd758",
         "started_at": "2024-03-05T06:41:52",
         "last_heartbeat": "2024-03-05T06:45:52",
