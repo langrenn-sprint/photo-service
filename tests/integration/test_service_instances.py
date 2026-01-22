@@ -29,7 +29,7 @@ def token() -> str:
 
 
 @pytest.fixture
-def token_unsufficient_role() -> str:
+def token_insufficient_role() -> str:
     """Create a valid token."""
     secret = os.getenv("JWT_SECRET")
     algorithm = "HS256"
@@ -564,7 +564,7 @@ async def test_delete_service_instance_by_id_no_authorization(
 # Forbidden:
 @pytest.mark.integration
 async def test_create_service_instance_insufficient_role(
-    client: _TestClient, mocker: MockFixture, token_unsufficient_role: MockFixture
+    client: _TestClient, mocker: MockFixture, token_insufficient_role: MockFixture
 ) -> None:
     """Should return 403 Forbidden."""
     si_id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
@@ -585,7 +585,7 @@ async def test_create_service_instance_insufficient_role(
     }
     headers = {
         hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token_unsufficient_role}",
+        hdrs.AUTHORIZATION: f"Bearer {token_insufficient_role}",
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
