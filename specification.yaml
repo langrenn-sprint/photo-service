@@ -1,66 +1,206 @@
 openapi: 3.0.3
 info:
   title: Photo service
-  description: The photo service let you administrate the main domain objects photo, startlist and racelist
+  description: The photo service manages photos, albums, configuration, service instances, and status for event photography
   version: "1.0"
   license:
     name: Apache 2.0
     url: "http://www.apache.org/licenses/LICENSE-2.0.html"
 tags:
-  - name: contestant
-    description: contestant in photo operations
   - name: photo
-    description: photo operations
-  - name: raceclass
-    description: raceclass operations
-  - name: competition-format
-    description: competition format operations
+    description: Photo operations
+  - name: album
+    description: Album operations
+  - name: config
+    description: Configuration operations
+  - name: service-instance
+    description: Service instance operations
+  - name: status
+    description: Status operations
+  - name: g-photos
+    description: Google Photos integration operations
+  - name: health
+    description: Health check endpoints
 paths:
-  /video_events:
+  /ping:
     get:
-      description: Get a list of video_events
-      requestBody:
-        eventId:
-          description: The event id
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/VideoEvent"
+      tags:
+        - health
+      description: Ping endpoint for health checks
       responses:
         200:
-          description: Ok
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: OK
+  /ready:
+    get:
+      tags:
+        - health
+      description: Readiness check endpoint
+      responses:
+        200:
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: OK
+  /albums:
+    get:
+      tags:
+        - album
+      description: Get a list of albums
+      parameters:
+        - name: gId
+          in: query
+          description: Google album id
+          required: false
+          schema:
+            type: string
+      responses:
+        200:
+          description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/VideoEventsCollection"
+                type: array
+                items:
+                  $ref: "#/components/schemas/Album"
     post:
       tags:
-        - video_events
+        - album
       security:
         - bearerAuth: []
-      description: Import new video_events
+      description: Add a new album
       requestBody:
-        eventId:
-          description: The event id
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/VideoEvent"
-        queueName:
-          description: The queue name
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/VideoEvent"
-        description: Video events will be imported from the service bus queue
+        description: The new album to be created
+        required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/VideoEvent"
+              $ref: "#/components/schemas/Album"
       responses:
         201:
           description: Created
+          headers:
+            Location:
+              schema:
+                type: string
+              description: URL of the created album
+        422:
+          description: Unprocessable Entity
+  /albums/{albumId}:
+    parameters:
+      - name: albumId
+        in: path
+        description: Album id
+        required: true
+        schema:
+          type: string
+    get:
+      tags:
+        - album
+      description: Get a unique album
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Album"
+        404:
+          description: Not found
+    put:
+      tags:
+        - album
+      security:
+        - bearerAuth: []
+      description: Update an album
+      requestBody:
+        description: The album data to update
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Album"
+      responses:
+        204:
+          description: No content
+        404:
+          description: Not found
+        422:
+          description: Unprocessable Entity
+    delete:
+      tags:
+        - album
+      security:
+        - bearerAuth: []
+      description: Delete an album
+      responses:
+        204:
+          description: No content
+        404:
+          description: Not found
   /photos:
+    get:
+      tags:
+        - photo
+      description: Get a list of photos
+      parameters:
+        - name: eventId
+          in: query
+          description: Event id to filter photos
+          required: false
+          schema:
+            type: string
+        - name: gId
+          in: query
+          description: Google photo id
+          required: false
+          schema:
+            type: string
+        - name: gBaseUrl
+          in: query
+          description: Google photo base URL
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Limit number of results, starred photos first
+          required: false
+          schema:
+            type: integer
+        - name: raceclass
+          in: query
+          description: Raceclass to filter photos
+          required: false
+          schema:
+            type: string
+        - name: raceId
+          in: query
+          description: Race id to filter photos
+          required: false
+          schema:
+            type: string
+        - name: starred
+          in: query
+          description: Filter starred photos only
+          required: false
+          schema:
+            type: boolean
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Photo"
     post:
       tags:
         - photo
@@ -69,6 +209,7 @@ paths:
       description: Add a new photo
       requestBody:
         description: The new photo to be created
+        required: true
         content:
           application/json:
             schema:
@@ -76,78 +217,92 @@ paths:
       responses:
         201:
           description: Created
-    get:
-      parameters:
-        - name: gId
-          in: path
-          description: google photo id (FK)
-          required: false
-          schema:
-            type: string
-            format: uuid
-        - name: limit
-          in: path
-          description: limit number of results, starred photos first
-          required: false
-          schema:
-            type: integer
-            format: uuid
-        - name: raceclass
-          in: path
-          description: raceclass (FK)
-          required: false
-          schema:
-            type: string
-            format: uuid
-      tags:
-        - photo
-      description: Get a list of photos
-      responses:
-        200:
-          description: Ok
-          content:
-            application/json:
+          headers:
+            Location:
               schema:
-                $ref: "#/components/schemas/PhotoCollection"
+                type: string
+              description: URL of the created photo
+        422:
+          description: Unprocessable Entity
   /photos/{photoId}:
     parameters:
       - name: photoId
         in: path
-        description: photo id
+        description: Photo id
         required: true
         schema:
           type: string
-          format: uuid
     get:
       tags:
         - photo
       description: Get a unique photo
       responses:
         200:
-          description: Ok
+          description: OK
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Photo"
+        404:
+          description: Not found
     put:
       tags:
         - photo
       security:
         - bearerAuth: []
-      description: Update an photo
+      description: Update a photo
+      requestBody:
+        description: The photo data to update
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Photo"
       responses:
         204:
           description: No content
+        404:
+          description: Not found
+        422:
+          description: Unprocessable Entity
     delete:
       tags:
         - photo
       security:
         - bearerAuth: []
-      description: Delete an photo
+      description: Delete a photo
       responses:
         204:
           description: No content
+        404:
+          description: Not found
   /config:
+    get:
+      tags:
+        - config
+      description: Get a config by key and event
+      parameters:
+        - name: key
+          in: query
+          description: Config key
+          required: true
+          schema:
+            type: string
+        - name: eventId
+          in: query
+          description: Id of event config applies to
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Config"
+        404:
+          description: Not found
     post:
       tags:
         - config
@@ -156,6 +311,7 @@ paths:
       description: Add a new config
       requestBody:
         description: The new config to be created
+        required: true
         content:
           application/json:
             schema:
@@ -163,68 +319,462 @@ paths:
       responses:
         201:
           description: Created
-    get:
-      parameters:
-        - name: key
-          in: path
-          description: config key
-          required: true
-          schema:
-            type: string
-        - name: eventId
-          in: path
-          description: Id of event config applies to
-          required: true
-          schema:
-            type: string
-            format: uuid
-      description: Get a config
-      responses:
-        200:
-          description: Ok
-          content:
-            application/json:
+          headers:
+            Location:
               schema:
-                $ref: "#/components/schemas/Config"
+                type: string
+              description: URL of the created config
+        422:
+          description: Unprocessable Entity
     put:
       tags:
         - config
       security:
         - bearerAuth: []
       description: Update a config with new value
+      requestBody:
+        description: The config data to update
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Config"
       responses:
         204:
           description: No content
-  /config/{id}:
+        404:
+          description: Not found
+        422:
+          description: Unprocessable Entity
     delete:
       tags:
         - config
       security:
         - bearerAuth: []
       description: Delete a config
-      responses:
-        204:
-          description: No content
-  /configs:
-    get:
       parameters:
-        - name: eventId
+        - name: configId
           in: path
-          description: Id of event config applies to
+          description: Config id
           required: true
           schema:
             type: string
-            format: uuid
-      description: Get a config
+      responses:
+        204:
+          description: No content
+        404:
+          description: Not found
+  /configs:
+    get:
+      tags:
+        - config
+      description: Get all configs
+      parameters:
+        - name: eventId
+          in: query
+          description: Id of event config applies to
+          required: false
+          schema:
+            type: string
       responses:
         200:
-          description: Ok
+          description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ConfigCollection"
+                type: array
+                items:
+                  $ref: "#/components/schemas/Config"
+  /service-instances:
+    get:
+      tags:
+        - service-instance
+      description: Get all service instances
+      parameters:
+        - name: eventId
+          in: query
+          description: Event id to filter service instances
+          required: false
+          schema:
+            type: string
+        - name: serviceType
+          in: query
+          description: Service type to filter
+          required: false
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: Status to filter
+          required: false
+          schema:
+            type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ServiceInstance"
+    post:
+      tags:
+        - service-instance
+      security:
+        - bearerAuth: []
+      description: Add a new service instance
+      requestBody:
+        description: The new service instance to be created
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ServiceInstance"
+      responses:
+        201:
+          description: Created
+          headers:
+            Location:
+              schema:
+                type: string
+              description: URL of the created service instance
+        422:
+          description: Unprocessable Entity
+  /service-instances/{serviceInstanceId}:
+    parameters:
+      - name: serviceInstanceId
+        in: path
+        description: Service instance id
+        required: true
+        schema:
+          type: string
+    get:
+      tags:
+        - service-instance
+      description: Get a unique service instance
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceInstance"
+        404:
+          description: Not found
+    put:
+      tags:
+        - service-instance
+      security:
+        - bearerAuth: []
+      description: Update a service instance
+      requestBody:
+        description: The service instance data to update
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ServiceInstance"
+      responses:
+        204:
+          description: No content
+        404:
+          description: Not found
+        422:
+          description: Unprocessable Entity
+    delete:
+      tags:
+        - service-instance
+      security:
+        - bearerAuth: []
+      description: Delete a service instance
+      responses:
+        204:
+          description: No content
+        404:
+          description: Not found
+  /status:
+    get:
+      tags:
+        - status
+      description: Get status entries
+      parameters:
+        - name: eventId
+          in: query
+          description: Event id to filter status
+          required: true
+          schema:
+            type: string
+        - name: count
+          in: query
+          description: Number of status entries to return (default 25)
+          required: false
+          schema:
+            type: integer
+            default: 25
+        - name: type
+          in: query
+          description: Status type to filter
+          required: false
+          schema:
+            type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Status"
+    post:
+      tags:
+        - status
+      security:
+        - bearerAuth: []
+      description: Add a new status entry
+      requestBody:
+        description: The new status to be created
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Status"
+      responses:
+        201:
+          description: Created
+          headers:
+            Location:
+              schema:
+                type: string
+              description: URL of the created status
+        403:
+          description: Forbidden
+        422:
+          description: Unprocessable Entity
+    delete:
+      tags:
+        - status
+      security:
+        - bearerAuth: []
+      description: Delete a status entry
+      parameters:
+        - name: id
+          in: path
+          description: Status id
+          required: true
+          schema:
+            type: string
+      responses:
+        204:
+          description: No content
+        404:
+          description: Not found
+  /g_photos:
+    get:
+      tags:
+        - g-photos
+      security:
+        - bearerAuth: []
+      description: Get photos from Google Photos
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+  /g_photos/{albumId}:
+    parameters:
+      - name: albumId
+        in: path
+        description: Google album id
+        required: true
+        schema:
+          type: string
+    get:
+      tags:
+        - g-photos
+      security:
+        - bearerAuth: []
+      description: Get photos from a specific Google Photos album
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
+  schemas:
+    Photo:
+      type: object
+      required:
+        - name
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        is_photo_finish:
+          type: boolean
+          default: false
+        is_start_registration:
+          type: boolean
+          default: false
+        starred:
+          type: boolean
+          default: false
+        confidence:
+          type: integer
+          default: 0
+        event_id:
+          type: string
+        creation_time:
+          type: string
+          format: time
+        information:
+          type: object
+        race_id:
+          type: string
+        raceclass:
+          type: string
+        biblist:
+          type: array
+          items:
+            type: integer
+        clublist:
+          type: array
+          items:
+            type: string
+        g_id:
+          type: string
+        g_product_url:
+          type: string
+        g_base_url:
+          type: string
+        ai_information:
+          type: object
+    Album:
+      type: object
+      required:
+        - g_id
+      properties:
+        id:
+          type: string
+        g_id:
+          type: string
+        is_photo_finish:
+          type: boolean
+          default: false
+        is_start_registration:
+          type: boolean
+          default: false
+        sync_on:
+          type: boolean
+          default: false
+        event_id:
+          type: string
+        camera_position:
+          type: string
+        changelog:
+          type: array
+          items:
+            $ref: "#/components/schemas/Changelog"
+        cover_photo_url:
+          type: string
+        last_sync_time:
+          type: string
+          format: time
+        place:
+          type: string
+        title:
+          type: string
+    Config:
+      type: object
+      required:
+        - event_id
+        - key
+        - value
+      properties:
+        id:
+          type: string
+        event_id:
+          type: string
+        key:
+          type: string
+        value:
+          type: string
+    ServiceInstance:
+      type: object
+      required:
+        - service_type
+        - instance_name
+        - status
+        - host_name
+        - action
+      properties:
+        id:
+          type: string
+        service_type:
+          type: string
+          description: Type of service (e.g., video-service, integration-service)
+        instance_name:
+          type: string
+        status:
+          type: string
+          description: Status (e.g., running, waiting, error)
+        host_name:
+          type: string
+        action:
+          type: string
+        event_id:
+          type: string
+        started_at:
+          type: string
+          format: date-time
+        last_heartbeat:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+    Status:
+      type: object
+      required:
+        - event_id
+        - time
+        - type
+        - message
+      properties:
+        id:
+          type: string
+        event_id:
+          type: string
+        time:
+          type: string
+          format: time
+        type:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+    Changelog:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        user_id:
+          type: string
+        comment:
+          type: string
