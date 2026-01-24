@@ -126,7 +126,9 @@ async def test_status(db: Any, action: int) -> str:
         # get all status by type
         event_id = status_dict["event_id"]
         status_type = status_dict["type"]
-        result = await StatusService.get_all_status_by_type(db, event_id, status_type, 25)
+        result = await StatusService.get_all_status_by_type(
+            db, event_id, status_type, 25
+        )
         body = f"Statuses by type: {result}"
     elif action == 5:
         # delete status

@@ -21,6 +21,8 @@ from .views import (
     PhotoView,
     Ping,
     Ready,
+    ServiceInstancesView,
+    ServiceInstanceView,
     StatusView,
     UnitTestView,
 )
@@ -58,6 +60,8 @@ async def create_app() -> web.Application:
             web.view("/ready", Ready),
             web.view("/photos", PhotosView),
             web.view("/photos/{photoId}", PhotoView),
+            web.view("/service-instances", ServiceInstancesView),
+            web.view("/service-instances/{serviceInstanceId}", ServiceInstanceView),
             web.view("/status", StatusView),
             web.view("/unit_test", UnitTestView),
         ]

@@ -15,7 +15,9 @@ class StatusAdapter(Adapter):
         return await db.status_collection.insert_one(status)
 
     @classmethod
-    async def get_status_by_id(cls: Any, db: Any, c_id: str) -> dict:  # pragma: no cover
+    async def get_status_by_id(
+        cls: Any, db: Any, c_id: str
+    ) -> dict:  # pragma: no cover
         """Get status function."""
         return await db.status_collection.find_one({"id": c_id})
 
@@ -25,9 +27,11 @@ class StatusAdapter(Adapter):
     ) -> list[dict]:  # pragma: no cover
         """Get latest status function."""
         try:
-            cursor = db.status_collection.find(
-                {"event_id": event_id}
-            ).sort("time", -1).limit(count)
+            cursor = (
+                db.status_collection.find({"event_id": event_id})
+                .sort("time", -1)
+                .limit(count)
+            )
             return await cursor.to_list(None)
         except Exception:
             err_msg = f"Error occurred while fetching status by event: {event_id}"
@@ -40,9 +44,11 @@ class StatusAdapter(Adapter):
     ) -> list[dict]:  # pragma: no cover
         """Get latest status function."""
         try:
-            cursor = db.status_collection.find(
-                {"type": status_type, "event_id": event_id}
-            ).sort("time", -1).limit(count)
+            cursor = (
+                db.status_collection.find({"type": status_type, "event_id": event_id})
+                .sort("time", -1)
+                .limit(count)
+            )
             return await cursor.to_list(None)
         except Exception:
             err_msg = f"Error occurred while fetching status by type: {status_type}"

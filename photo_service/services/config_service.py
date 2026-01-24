@@ -61,9 +61,7 @@ class ConfigService:
             db, config.event_id, config.key
         )
         if old_config:
-            err_msg = (
-                f"Config with key {config.key} already exists on event {config.event_id}"
-            )
+            err_msg = f"Config with key {config.key} already exists on event {config.event_id}"
             raise IllegalValueError(err_msg) from None
 
         # create id
