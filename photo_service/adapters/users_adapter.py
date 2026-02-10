@@ -22,7 +22,7 @@ class UsersAdapter:
     async def authorize(cls: Any, token: str | None, roles: list) -> None:
         """Try to authorize."""
         url = f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize"
-        body = {"token": token, "roles": roles}
+        body = {"token": token, "target_roles": roles}
 
         async with ClientSession() as session, session.post(url, json=body) as response:
             if response.status == HTTPStatus.NO_CONTENT:
