@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 services:
   photo-service:
     build: .
@@ -13,7 +13,7 @@ services:
       - GOOGLE_PHOTO_SCOPE=https://www.googleapis.com/auth/photoslibrary.readonly
       - GOOGLE_PHOTO_CREDENTIALS_FILE=/home/heming/github/photo_api_credentials.json
       - USERS_HOST_SERVER=user-service
-      - USERS_HOST_PORT=8080
+      - USERS_HOST_PORT=8000
       - DB_HOST=mongodb
       - DB_PORT=27017
       - DB_USER=${DB_USER}
@@ -25,7 +25,7 @@ services:
   user-service:
     image: ghcr.io/langrenn-sprint/user-service:latest
     ports:
-      - 8086:8080
+      - 8086:8000
     environment:
       - JWT_SECRET=${JWT_SECRET}
       - JWT_EXP_DELTA_SECONDS=${JWT_EXP_DELTA_SECONDS}
@@ -38,7 +38,7 @@ services:
     depends_on:
       - mongodb
   mongodb:
-    image: mongo:latest
+    image: mongo:7-jammy
     ports:
       - 27017:27017
     environment:
