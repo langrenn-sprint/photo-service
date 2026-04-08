@@ -1,45 +1,41 @@
 """Conftest module."""
 
-from http import HTTPStatus
 import os
 import time
-from typing import Any
+from http import HTTPStatus
 
 import pytest
 import requests
-from aiohttp.test_utils import TestClient as _TestClient
-from dotenv import load_dotenv
+from fastapi.testclient import TestClient
 from requests.exceptions import ConnectionError as _ConnectionError
 
-from photo_service import create_app
+from app import api
 
-load_dotenv()
 HOST_PORT = int(os.getenv("HOST_PORT", "8080"))
 
 
 @pytest.fixture
-async def client(aiohttp_client: Any) -> _TestClient:
+def client() -> TestClient:
     """Instantiate server and start it."""
-    app = await create_app()
-    return await aiohttp_client(app)
+    return TestClient(api)
 
 
-def is_responsive(url: Any) -> Any:
+def is_responsive(url: str) -> bool:
     """Return true if response from service is 200."""
     url = f"{url}/ready"
     try:
         response = requests.get(url, timeout=60)
         if response.status_code == HTTPStatus.OK:
-            time.sleep(2)  # sleep extra 2 sec
+            time.sleep(2)
             return True
     except _ConnectionError:
         return False
+    return False
 
 
 @pytest.fixture(scope="session")
-def http_service(docker_ip: Any, docker_services: Any) -> Any:
+def http_service(docker_ip: str, docker_services: object) -> str:
     """Ensure that HTTP service is up and responsive."""
-    # `port_for` takes a container port and returns the corresponding host port
     port = docker_services.port_for("photo-service", HOST_PORT)
     url = f"http://{docker_ip}:{port}"
     docker_services.wait_until_responsive(
@@ -49,12 +45,12 @@ def http_service(docker_ip: Any, docker_services: Any) -> Any:
 
 
 @pytest.fixture(scope="session")
-def docker_compose_file(pytestconfig: Any) -> Any:
+def docker_compose_file(pytestconfig: object) -> str:
     """Override default location of docker-compose.yml file."""
     return os.path.join(str(pytestconfig.rootdir), "./", "docker-compose.yml")
 
 
 @pytest.fixture(scope="session")
-def docker_cleanup(pytestconfig: Any) -> Any:
+def docker_cleanup(pytestconfig: object) -> str:
     """Override default location of docker-compose.yml file."""
     return "stop"
