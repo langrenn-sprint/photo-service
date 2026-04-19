@@ -6,17 +6,8 @@ from http import HTTPStatus
 
 import jwt
 import pytest
-from aiohttp import hdrs
-from aiohttp.test_utils import TestClient as _TestClient
-from aioresponses import aioresponses
-from dotenv import load_dotenv
-from multidict import MultiDict
+from fastapi.testclient import TestClient
 from pytest_mock import MockFixture
-
-load_dotenv()
-
-USERS_HOST_SERVER = os.getenv("USERS_HOST_SERVER", "localhost")
-USERS_HOST_PORT = os.getenv("USERS_HOST_PORT", "8080")
 
 
 @pytest.fixture
@@ -24,7 +15,7 @@ def token() -> str:
     """Create a valid token."""
     secret = os.getenv("JWT_SECRET")
     algorithm = "HS256"
-    payload = {"identity": os.getenv("ADMIN_USERNAME"), "roles": ["admin"]}
+    payload = {"username": os.getenv("ADMIN_USERNAME"), "role": "admin", "exp": 9999999999}
     return jwt.encode(payload, secret, algorithm)
 
 
@@ -33,12 +24,12 @@ def token_insufficient_role() -> str:
     """Create a valid token."""
     secret = os.getenv("JWT_SECRET")
     algorithm = "HS256"
-    payload = {"identity": "user", "roles": ["user"]}
+    payload = {"username": "user", "role": "user", "exp": 9999999999}
     return jwt.encode(payload, secret, algorithm)
 
 
 @pytest.fixture
-async def service_instance() -> dict:
+def service_instance() -> dict:
     """Service instance object for testing."""
     return {
         "service_type": "video-service",
@@ -54,107 +45,94 @@ async def service_instance() -> dict:
 
 
 @pytest.mark.integration
-async def test_create_service_instance(
-    client: _TestClient,
+def test_create_service_instance(
+    client: TestClient,
     mocker: MockFixture,
-    token: MockFixture,
+    token: str,
     service_instance: dict,
 ) -> None:
     """Should return Created, location header."""
     si_id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "photo_service.services.service_instances_service.create_id",
+        "app.services.service_instances_service.create_id",
         return_value=si_id,
     )
     mocker.patch(
-        "photo_service.adapters.service_instances_adapter.ServiceInstancesAdapter.create_service_instance",
+        "app.adapters.service_instances_adapter.ServiceInstancesAdapter.create_service_instance",
         return_value=si_id,
     )
 
     headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token}",
+        "content-type": "application/json",
+        "authorization": f"Bearer {token}",
     }
 
-    request_body = service_instance
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
-        resp = await client.post(
-            "/service-instances", headers=headers, json=request_body
-        )
-        assert resp.status == HTTPStatus.CREATED
-        assert f"/service-instances/{si_id}" in resp.headers[hdrs.LOCATION]
+    resp = client.post("/service-instances", headers=headers, json=service_instance)
+    assert resp.status_code == HTTPStatus.CREATED
+    assert f"/service-instances/{si_id}" in resp.headers["location"]
 
 
 @pytest.mark.integration
-async def test_get_service_instance_by_id(
-    client: _TestClient, mocker: MockFixture, token: MockFixture, service_instance: dict
+def test_get_service_instance_by_id(
+    client: TestClient, mocker: MockFixture, token: str, service_instance: dict
 ) -> None:
     """Should return OK, and a body containing one service instance."""
     si_id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "photo_service.adapters.service_instances_adapter.ServiceInstancesAdapter.get_service_instance_by_id",
+        "app.adapters.service_instances_adapter.ServiceInstancesAdapter.get_service_instance_by_id",
         return_value={"id": si_id} | service_instance,
     )
 
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
-
-        resp = await client.get(f"/service-instances/{si_id}")
-        assert resp.status == HTTPStatus.OK
-        assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
-        body = await resp.json()
-        assert type(service_instance) is dict
-        assert body["id"] == si_id
-        assert body["service_type"] == service_instance["service_type"]
-        assert body["instance_name"] == service_instance["instance_name"]
-        assert body["status"] == service_instance["status"]
+    resp = client.get(f"/service-instances/{si_id}")
+    assert resp.status_code == HTTPStatus.OK
+    assert "application/json" in resp.headers["content-type"]
+    body = resp.json()
+    assert type(service_instance) is dict
+    assert body["id"] == si_id
+    assert body["service_type"] == service_instance["service_type"]
+    assert body["instance_name"] == service_instance["instance_name"]
+    assert body["status"] == service_instance["status"]
 
 
 @pytest.mark.integration
-async def test_update_service_instance_by_id(
-    client: _TestClient,
+def test_update_service_instance_by_id(
+    client: TestClient,
     mocker: MockFixture,
-    token: MockFixture,
+    token: str,
     service_instance: dict,
 ) -> None:
     """Should return No Content."""
     si_id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "photo_service.adapters.service_instances_adapter.ServiceInstancesAdapter.get_service_instance_by_id",
+        "app.adapters.service_instances_adapter.ServiceInstancesAdapter.get_service_instance_by_id",
         return_value={"id": si_id} | service_instance,
     )
     mocker.patch(
-        "photo_service.adapters.service_instances_adapter.ServiceInstancesAdapter.update_service_instance",
+        "app.adapters.service_instances_adapter.ServiceInstancesAdapter.update_service_instance",
         return_value={"id": si_id} | service_instance,
     )
 
     headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token}",
+        "content-type": "application/json",
+        "authorization": f"Bearer {token}",
     }
     new_status = "error"
     request_body = deepcopy(service_instance)
     request_body["id"] = si_id
     request_body["status"] = new_status
 
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
-
-        resp = await client.put(
-            f"/service-instances/{si_id}", headers=headers, json=request_body
-        )
-        assert resp.status == HTTPStatus.NO_CONTENT
+    resp = client.put(f"/service-instances/{si_id}", headers=headers, json=request_body)
+    assert resp.status_code == HTTPStatus.NO_CONTENT
 
 
 @pytest.mark.integration
-async def test_get_all_service_instances(
-    client: _TestClient, mocker: MockFixture, token: MockFixture
+def test_get_all_service_instances(
+    client: TestClient, mocker: MockFixture, token: str
 ) -> None:
     """Should return OK and a valid json body."""
     si_id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "photo_service.adapters.service_instances_adapter.ServiceInstancesAdapter.get_all_service_instances",
+        "app.adapters.service_instances_adapter.ServiceInstancesAdapter.get_all_service_instances",
         return_value=[
             {
                 "id": si_id,
@@ -167,29 +145,25 @@ async def test_get_all_service_instances(
         ],
     )
 
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
-        resp = await client.get(
-            "/service-instances?eventId=1e95458c-e000-4d8b-beda-f860c77fd758"
-        )
-        assert resp.status == HTTPStatus.OK
-        assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
-        service_instances = await resp.json()
-        assert type(service_instances) is list
-        assert len(service_instances) > 0
-        assert si_id == service_instances[0]["id"]
+    resp = client.get("/service-instances?eventId=1e95458c-e000-4d8b-beda-f860c77fd758")
+    assert resp.status_code == HTTPStatus.OK
+    assert "application/json" in resp.headers["content-type"]
+    service_instances = resp.json()
+    assert type(service_instances) is list
+    assert len(service_instances) > 0
+    assert si_id == service_instances[0]["id"]
 
 
 @pytest.mark.integration
-async def test_get_service_instances_by_service_type(
-    client: _TestClient, mocker: MockFixture, token: MockFixture
+def test_get_service_instances_by_service_type(
+    client: TestClient, mocker: MockFixture, token: str
 ) -> None:
     """Should return OK and a valid json body."""
     si_id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     event_id = "1e95458c-e000-4d8b-beda-f860c77fd758"
     service_type = "video-service"
     mocker.patch(
-        "photo_service.adapters.service_instances_adapter.ServiceInstancesAdapter.get_service_instances_by_service_type",
+        "app.adapters.service_instances_adapter.ServiceInstancesAdapter.get_service_instances_by_service_type",
         return_value=[
             {
                 "id": si_id,
@@ -202,29 +176,25 @@ async def test_get_service_instances_by_service_type(
         ],
     )
 
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
-        resp = await client.get(
-            f"/service-instances?eventId={event_id}&serviceType={service_type}"
-        )
-        assert resp.status == HTTPStatus.OK
-        assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
-        service_instances = await resp.json()
-        assert type(service_instances) is list
-        assert len(service_instances) > 0
-        assert service_type == service_instances[0]["service_type"]
+    resp = client.get(f"/service-instances?eventId={event_id}&serviceType={service_type}")
+    assert resp.status_code == HTTPStatus.OK
+    assert "application/json" in resp.headers["content-type"]
+    service_instances = resp.json()
+    assert type(service_instances) is list
+    assert len(service_instances) > 0
+    assert service_type == service_instances[0]["service_type"]
 
 
 @pytest.mark.integration
-async def test_get_service_instances_by_status(
-    client: _TestClient, mocker: MockFixture, token: MockFixture
+def test_get_service_instances_by_status(
+    client: TestClient, mocker: MockFixture, token: str
 ) -> None:
     """Should return OK and a valid json body."""
     si_id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     event_id = "1e95458c-e000-4d8b-beda-f860c77fd758"
     status = "running"
     mocker.patch(
-        "photo_service.adapters.service_instances_adapter.ServiceInstancesAdapter.get_service_instances_by_status",
+        "app.adapters.service_instances_adapter.ServiceInstancesAdapter.get_service_instances_by_status",
         return_value=[
             {
                 "id": si_id,
@@ -237,27 +207,23 @@ async def test_get_service_instances_by_status(
         ],
     )
 
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
-        resp = await client.get(
-            f"/service-instances?eventId={event_id}&status={status}"
-        )
-        assert resp.status == HTTPStatus.OK
-        assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
-        service_instances = await resp.json()
-        assert type(service_instances) is list
-        assert len(service_instances) > 0
-        assert status == service_instances[0]["status"]
+    resp = client.get(f"/service-instances?eventId={event_id}&status={status}")
+    assert resp.status_code == HTTPStatus.OK
+    assert "application/json" in resp.headers["content-type"]
+    service_instances = resp.json()
+    assert type(service_instances) is list
+    assert len(service_instances) > 0
+    assert status == service_instances[0]["status"]
 
 
 @pytest.mark.integration
-async def test_delete_service_instance_by_id(
-    client: _TestClient, mocker: MockFixture, token: MockFixture
+def test_delete_service_instance_by_id(
+    client: TestClient, mocker: MockFixture, token: str
 ) -> None:
     """Should return No Content."""
     si_id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "photo_service.adapters.service_instances_adapter.ServiceInstancesAdapter.get_service_instance_by_id",
+        "app.adapters.service_instances_adapter.ServiceInstancesAdapter.get_service_instance_by_id",
         return_value={
             "id": si_id,
             "service_type": "video-service",
@@ -268,64 +234,56 @@ async def test_delete_service_instance_by_id(
         },
     )
     mocker.patch(
-        "photo_service.adapters.service_instances_adapter.ServiceInstancesAdapter.delete_service_instance",
+        "app.adapters.service_instances_adapter.ServiceInstancesAdapter.delete_service_instance",
         return_value=si_id,
     )
     headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
+        "authorization": f"Bearer {token}",
     }
 
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
-
-        resp = await client.delete(f"/service-instances/{si_id}", headers=headers)
-        assert resp.status == HTTPStatus.NO_CONTENT
+    resp = client.delete(f"/service-instances/{si_id}", headers=headers)
+    assert resp.status_code == HTTPStatus.NO_CONTENT
 
 
 # Bad cases
 
 
-# Mandatory properties missing at create and update:
 @pytest.mark.integration
-async def test_create_service_instance_missing_mandatory_property(
-    client: _TestClient, mocker: MockFixture, token: MockFixture
+def test_create_service_instance_missing_mandatory_property(
+    client: TestClient, mocker: MockFixture, token: str
 ) -> None:
     """Should return 422 HTTPUnprocessableEntity."""
     si_id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "photo_service.services.service_instances_service.create_id",
+        "app.services.service_instances_service.create_id",
         return_value=si_id,
     )
     mocker.patch(
-        "photo_service.adapters.service_instances_adapter.ServiceInstancesAdapter.create_service_instance",
+        "app.adapters.service_instances_adapter.ServiceInstancesAdapter.create_service_instance",
         return_value=si_id,
     )
     request_body = {"optional_property": "Optional_property"}
     headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token}",
+        "content-type": "application/json",
+        "authorization": f"Bearer {token}",
     }
 
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
-        resp = await client.post(
-            "/service-instances", headers=headers, json=request_body
-        )
-        assert resp.status == HTTPStatus.UNPROCESSABLE_ENTITY
+    resp = client.post("/service-instances", headers=headers, json=request_body)
+    assert resp.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
 
 
 @pytest.mark.integration
-async def test_create_service_instance_with_input_id(
-    client: _TestClient, mocker: MockFixture, token: MockFixture
+def test_create_service_instance_with_input_id(
+    client: TestClient, mocker: MockFixture, token: str
 ) -> None:
     """Should return 422 HTTPUnprocessableEntity."""
     si_id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "photo_service.services.service_instances_service.create_id",
+        "app.services.service_instances_service.create_id",
         return_value=si_id,
     )
     mocker.patch(
-        "photo_service.adapters.service_instances_adapter.ServiceInstancesAdapter.create_service_instance",
+        "app.adapters.service_instances_adapter.ServiceInstancesAdapter.create_service_instance",
         return_value=si_id,
     )
     request_body = {
@@ -337,29 +295,25 @@ async def test_create_service_instance_with_input_id(
         "action": "start",
     }
     headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token}",
+        "content-type": "application/json",
+        "authorization": f"Bearer {token}",
     }
 
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
-        resp = await client.post(
-            "/service-instances", headers=headers, json=request_body
-        )
-        assert resp.status == HTTPStatus.UNPROCESSABLE_ENTITY
+    resp = client.post("/service-instances", headers=headers, json=request_body)
+    assert resp.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
 
 
 @pytest.mark.integration
-async def test_create_service_instance_adapter_fails(
-    client: _TestClient, mocker: MockFixture, token: MockFixture
+def test_create_service_instance_adapter_fails(
+    client: TestClient, mocker: MockFixture, token: str
 ) -> None:
     """Should return 400 HTTPBadRequest."""
     mocker.patch(
-        "photo_service.services.service_instances_service.create_id",
+        "app.services.service_instances_service.create_id",
         return_value=None,
     )
     mocker.patch(
-        "photo_service.adapters.service_instances_adapter.ServiceInstancesAdapter.create_service_instance",
+        "app.adapters.service_instances_adapter.ServiceInstancesAdapter.create_service_instance",
         return_value=None,
     )
     request_body = {
@@ -370,26 +324,22 @@ async def test_create_service_instance_adapter_fails(
         "action": "start",
     }
     headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token}",
+        "content-type": "application/json",
+        "authorization": f"Bearer {token}",
     }
 
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
-        resp = await client.post(
-            "/service-instances", headers=headers, json=request_body
-        )
-        assert resp.status == HTTPStatus.BAD_REQUEST
+    resp = client.post("/service-instances", headers=headers, json=request_body)
+    assert resp.status_code == HTTPStatus.BAD_REQUEST
 
 
 @pytest.mark.integration
-async def test_update_service_instance_by_id_missing_mandatory_property(
-    client: _TestClient, mocker: MockFixture, token: MockFixture
+def test_update_service_instance_by_id_missing_mandatory_property(
+    client: TestClient, mocker: MockFixture, token: str
 ) -> None:
     """Should return 422 HTTPUnprocessableEntity."""
     si_id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "photo_service.adapters.service_instances_adapter.ServiceInstancesAdapter.get_service_instance_by_id",
+        "app.adapters.service_instances_adapter.ServiceInstancesAdapter.get_service_instance_by_id",
         return_value={
             "id": si_id,
             "service_type": "video-service",
@@ -400,33 +350,28 @@ async def test_update_service_instance_by_id_missing_mandatory_property(
         },
     )
     mocker.patch(
-        "photo_service.adapters.service_instances_adapter.ServiceInstancesAdapter.update_service_instance",
+        "app.adapters.service_instances_adapter.ServiceInstancesAdapter.update_service_instance",
         return_value=si_id,
     )
 
     headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token}",
+        "content-type": "application/json",
+        "authorization": f"Bearer {token}",
     }
     request_body = {"id": si_id, "optional_property": "Optional_property"}
 
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
-
-        resp = await client.put(
-            f"/service-instances/{si_id}", headers=headers, json=request_body
-        )
-        assert resp.status == HTTPStatus.UNPROCESSABLE_ENTITY
+    resp = client.put(f"/service-instances/{si_id}", headers=headers, json=request_body)
+    assert resp.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
 
 
 @pytest.mark.integration
-async def test_update_service_instance_by_id_different_id_in_body(
-    client: _TestClient, mocker: MockFixture, token: MockFixture
+def test_update_service_instance_by_id_different_id_in_body(
+    client: TestClient, mocker: MockFixture, token: str
 ) -> None:
     """Should return 422 HTTPUnprocessableEntity."""
     si_id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "photo_service.adapters.service_instances_adapter.ServiceInstancesAdapter.get_service_instance_by_id",
+        "app.adapters.service_instances_adapter.ServiceInstancesAdapter.get_service_instance_by_id",
         return_value={
             "id": si_id,
             "service_type": "video-service",
@@ -437,13 +382,13 @@ async def test_update_service_instance_by_id_different_id_in_body(
         },
     )
     mocker.patch(
-        "photo_service.adapters.service_instances_adapter.ServiceInstancesAdapter.update_service_instance",
+        "app.adapters.service_instances_adapter.ServiceInstancesAdapter.update_service_instance",
         return_value=si_id,
     )
 
     headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token}",
+        "content-type": "application/json",
+        "authorization": f"Bearer {token}",
     }
     request_body = {
         "id": "different_id",
@@ -454,30 +399,25 @@ async def test_update_service_instance_by_id_different_id_in_body(
         "action": "start",
     }
 
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
-
-        resp = await client.put(
-            f"/service-instances/{si_id}", headers=headers, json=request_body
-        )
-        assert resp.status == HTTPStatus.UNPROCESSABLE_ENTITY
+    resp = client.put(f"/service-instances/{si_id}", headers=headers, json=request_body)
+    assert resp.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
 
 
 # Unauthorized cases:
 
 
 @pytest.mark.integration
-async def test_create_service_instance_no_authorization(
-    client: _TestClient, mocker: MockFixture
+def test_create_service_instance_no_authorization(
+    client: TestClient, mocker: MockFixture
 ) -> None:
     """Should return 401 Unauthorized."""
     si_id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "photo_service.services.service_instances_service.create_id",
+        "app.services.service_instances_service.create_id",
         return_value=si_id,
     )
     mocker.patch(
-        "photo_service.adapters.service_instances_adapter.ServiceInstancesAdapter.create_service_instance",
+        "app.adapters.service_instances_adapter.ServiceInstancesAdapter.create_service_instance",
         return_value=si_id,
     )
 
@@ -488,25 +428,20 @@ async def test_create_service_instance_no_authorization(
         "host_name": "localhost",
         "action": "start",
     }
-    headers = MultiDict([(hdrs.CONTENT_TYPE, "application/json")])
+    headers = {"content-type": "application/json"}
 
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=401)
-
-        resp = await client.post(
-            "/service-instances", headers=headers, json=request_body
-        )
-        assert resp.status == HTTPStatus.UNAUTHORIZED
+    resp = client.post("/service-instances", headers=headers, json=request_body)
+    assert resp.status_code == HTTPStatus.UNAUTHORIZED
 
 
 @pytest.mark.integration
-async def test_update_service_instance_by_id_no_authorization(
-    client: _TestClient, mocker: MockFixture
+def test_update_service_instance_by_id_no_authorization(
+    client: TestClient, mocker: MockFixture
 ) -> None:
     """Should return 401 Unauthorized."""
     si_id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "photo_service.adapters.service_instances_adapter.ServiceInstancesAdapter.get_service_instance_by_id",
+        "app.adapters.service_instances_adapter.ServiceInstancesAdapter.get_service_instance_by_id",
         return_value={
             "id": si_id,
             "service_type": "video-service",
@@ -517,14 +452,11 @@ async def test_update_service_instance_by_id_no_authorization(
         },
     )
     mocker.patch(
-        "photo_service.adapters.service_instances_adapter.ServiceInstancesAdapter.update_service_instance",
+        "app.adapters.service_instances_adapter.ServiceInstancesAdapter.update_service_instance",
         return_value=si_id,
     )
 
-    headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-    }
-
+    headers = {"content-type": "application/json"}
     request_body = {
         "id": si_id,
         "service_type": "video-service",
@@ -534,46 +466,38 @@ async def test_update_service_instance_by_id_no_authorization(
         "action": "start",
     }
 
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=401)
-
-        resp = await client.put(
-            f"/service-instances/{si_id}", headers=headers, json=request_body
-        )
-        assert resp.status == HTTPStatus.UNAUTHORIZED
+    resp = client.put(f"/service-instances/{si_id}", headers=headers, json=request_body)
+    assert resp.status_code == HTTPStatus.UNAUTHORIZED
 
 
 @pytest.mark.integration
-async def test_delete_service_instance_by_id_no_authorization(
-    client: _TestClient, mocker: MockFixture
+def test_delete_service_instance_by_id_no_authorization(
+    client: TestClient, mocker: MockFixture
 ) -> None:
     """Should return 401 Unauthorized."""
     si_id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "photo_service.adapters.service_instances_adapter.ServiceInstancesAdapter.delete_service_instance",
+        "app.adapters.service_instances_adapter.ServiceInstancesAdapter.delete_service_instance",
         return_value=si_id,
     )
 
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=401)
-
-        resp = await client.delete(f"/service-instances/{si_id}")
-        assert resp.status == HTTPStatus.UNAUTHORIZED
+    resp = client.delete(f"/service-instances/{si_id}")
+    assert resp.status_code == HTTPStatus.UNAUTHORIZED
 
 
 # Forbidden:
 @pytest.mark.integration
-async def test_create_service_instance_insufficient_role(
-    client: _TestClient, mocker: MockFixture, token_insufficient_role: MockFixture
+def test_create_service_instance_insufficient_role(
+    client: TestClient, mocker: MockFixture, token_insufficient_role: str
 ) -> None:
     """Should return 403 Forbidden."""
     si_id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "photo_service.services.service_instances_service.create_id",
+        "app.services.service_instances_service.create_id",
         return_value=si_id,
     )
     mocker.patch(
-        "photo_service.adapters.service_instances_adapter.ServiceInstancesAdapter.create_service_instance",
+        "app.adapters.service_instances_adapter.ServiceInstancesAdapter.create_service_instance",
         return_value=si_id,
     )
     request_body = {
@@ -584,57 +508,50 @@ async def test_create_service_instance_insufficient_role(
         "action": "start",
     }
     headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token_insufficient_role}",
+        "content-type": "application/json",
+        "authorization": f"Bearer {token_insufficient_role}",
     }
 
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=403)
-        resp = await client.post(
-            "/service-instances", headers=headers, json=request_body
-        )
-        assert resp.status == HTTPStatus.FORBIDDEN
+    resp = client.post("/service-instances", headers=headers, json=request_body)
+    assert resp.status_code == HTTPStatus.FORBIDDEN
 
 
 # NOT FOUND CASES:
 
 
 @pytest.mark.integration
-async def test_get_service_instance_not_found(
-    client: _TestClient, mocker: MockFixture, token: MockFixture
+def test_get_service_instance_not_found(
+    client: TestClient, mocker: MockFixture, token: str
 ) -> None:
     """Should return 404 Not found."""
     si_id = "does-not-exist"
     mocker.patch(
-        "photo_service.adapters.service_instances_adapter.ServiceInstancesAdapter.get_service_instance_by_id",
+        "app.adapters.service_instances_adapter.ServiceInstancesAdapter.get_service_instance_by_id",
         return_value=None,
     )
 
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
-
-        resp = await client.get(f"/service-instances/{si_id}")
-        assert resp.status == HTTPStatus.NOT_FOUND
+    resp = client.get(f"/service-instances/{si_id}")
+    assert resp.status_code == HTTPStatus.NOT_FOUND
 
 
 @pytest.mark.integration
-async def test_update_service_instance_not_found(
-    client: _TestClient, mocker: MockFixture, token: MockFixture
+def test_update_service_instance_not_found(
+    client: TestClient, mocker: MockFixture, token: str
 ) -> None:
     """Should return 404 Not found."""
     si_id = "does-not-exist"
     mocker.patch(
-        "photo_service.adapters.service_instances_adapter.ServiceInstancesAdapter.get_service_instance_by_id",
+        "app.adapters.service_instances_adapter.ServiceInstancesAdapter.get_service_instance_by_id",
         return_value=None,
     )
     mocker.patch(
-        "photo_service.adapters.service_instances_adapter.ServiceInstancesAdapter.update_service_instance",
+        "app.adapters.service_instances_adapter.ServiceInstancesAdapter.update_service_instance",
         return_value=None,
     )
 
     headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token}",
+        "content-type": "application/json",
+        "authorization": f"Bearer {token}",
     }
     request_body = {
         "id": "290e70d5-0933-4af0-bb53-1d705ba7eb95",
@@ -645,34 +562,27 @@ async def test_update_service_instance_not_found(
         "action": "start",
     }
 
-    si_id = "does-not-exist"
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
-        resp = await client.put(
-            f"/service-instances/{si_id}", headers=headers, json=request_body
-        )
-        assert resp.status == HTTPStatus.NOT_FOUND
+    resp = client.put(f"/service-instances/{si_id}", headers=headers, json=request_body)
+    assert resp.status_code == HTTPStatus.NOT_FOUND
 
 
 @pytest.mark.integration
-async def test_delete_service_instance_not_found(
-    client: _TestClient, mocker: MockFixture, token: MockFixture
+def test_delete_service_instance_not_found(
+    client: TestClient, mocker: MockFixture, token: str
 ) -> None:
     """Should return 404 Not found."""
     si_id = "does-not-exist"
     mocker.patch(
-        "photo_service.adapters.service_instances_adapter.ServiceInstancesAdapter.get_service_instance_by_id",
+        "app.adapters.service_instances_adapter.ServiceInstancesAdapter.get_service_instance_by_id",
         return_value=None,
     )
     mocker.patch(
-        "photo_service.adapters.service_instances_adapter.ServiceInstancesAdapter.delete_service_instance",
+        "app.adapters.service_instances_adapter.ServiceInstancesAdapter.delete_service_instance",
         return_value=None,
     )
 
     headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
+        "authorization": f"Bearer {token}",
     }
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
-        resp = await client.delete(f"/service-instances/{si_id}", headers=headers)
-        assert resp.status == HTTPStatus.NOT_FOUND
+    resp = client.delete(f"/service-instances/{si_id}", headers=headers)
+    assert resp.status_code == HTTPStatus.NOT_FOUND

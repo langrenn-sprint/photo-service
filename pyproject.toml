@@ -142,7 +142,6 @@ env = [
     "USERS_HOST_PORT=8086",
 ]
 
-asyncio_mode = "auto"
 markers = [
     "unit: marks tests as unit (fast)",
     "integration: marks tests as integration (slower)",

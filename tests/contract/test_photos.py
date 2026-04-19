@@ -1,4 +1,4 @@
-"""Contract test cases for ping."""
+"""Contract test cases for photos."""
 
 import logging
 import os
@@ -7,13 +7,12 @@ from copy import deepcopy
 from http import HTTPStatus
 from typing import Any
 
-import jwt
+import httpx
 import motor.motor_asyncio
 import pytest
-from aiohttp import ClientSession, hdrs
 from pytest_mock import MockFixture
 
-from photo_service.utils import db_utils
+from app.utils import db_utils
 
 USERS_HOST_SERVER = os.getenv("USERS_HOST_SERVER")
 USERS_HOST_PORT = os.getenv("USERS_HOST_PORT")
@@ -28,18 +27,16 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 async def token(http_service: Any) -> str:
     """Create a valid token."""
     url = f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/login"
-    headers = {hdrs.CONTENT_TYPE: "application/json"}
+    headers = {"content-type": "application/json"}
     request_body = {
         "username": os.getenv("ADMIN_USERNAME"),
         "password": os.getenv("ADMIN_PASSWORD"),
     }
-    session = ClientSession()
-    async with session.post(url, headers=headers, json=request_body) as response:
-        body = await response.json()
-    await session.close()
-    if response.status != 200:
-        logging.error(f"Got unexpected status {response.status} from {http_service}.")
-    return body["token"]
+    async with httpx.AsyncClient() as client:
+        response = await client.post(url, headers=headers, json=request_body)
+    if response.status_code != 200:
+        logging.error(f"Got unexpected status {response.status_code} from {http_service}.")
+    return response.json()["token"]
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -94,19 +91,16 @@ async def test_create_photo(
     photo: dict,
 ) -> None:
     """Should return Created, location header and no body."""
-    async with ClientSession() as session:
-        headers = {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        }
-        url = f"{http_service}/photos"
-        request_body = photo
+    headers = {
+        "content-type": "application/json",
+        "authorization": f"Bearer {token}",
+    }
+    url = f"{http_service}/photos"
+    async with httpx.AsyncClient() as client:
+        response = await client.post(url, headers=headers, json=photo)
 
-        async with session.post(url, headers=headers, json=request_body) as response:
-            status = response.status
-
-        assert status == HTTPStatus.CREATED
-        assert "/photos/" in response.headers[hdrs.LOCATION]
+    assert response.status_code == HTTPStatus.CREATED
+    assert "/photos/" in response.headers["location"]
 
 
 @pytest.mark.contract
@@ -114,14 +108,12 @@ async def test_create_photo(
 async def test_get_all_photos(http_service: Any, token: MockFixture) -> None:
     """Should return OK and a list of photos as json."""
     url = f"{http_service}/photos?eventId=1e95458c-e000-4d8b-beda-f860c77fd758"
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url)
 
-    session = ClientSession()
-    async with session.get(url) as response:
-        photos = await response.json()
-    await session.close()
-
-    assert response.status == HTTPStatus.OK
-    assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
+    assert response.status_code == HTTPStatus.OK
+    assert "application/json" in response.headers["content-type"]
+    photos = response.json()
     assert type(photos) is list
     assert len(photos) > 0
 
@@ -131,20 +123,17 @@ async def test_get_all_photos(http_service: Any, token: MockFixture) -> None:
 async def test_get_photo_by_id(
     http_service: Any, token: MockFixture, photo: dict
 ) -> None:
-    """Should return OK and an photo as json."""
-    url = f"{http_service}/photos?eventId=1e95458c-e000-4d8b-beda-f860c77fd758"
-
-    async with ClientSession() as session:
-        async with session.get(url) as response:
-            photos = await response.json()
+    """Should return OK and a photo as json."""
+    list_url = f"{http_service}/photos?eventId=1e95458c-e000-4d8b-beda-f860c77fd758"
+    async with httpx.AsyncClient() as client:
+        response = await client.get(list_url)
+        photos = response.json()
         p_id = photos[0]["id"]
-        url = f"{http_service}/photos/{p_id}"
-        async with session.get(url) as response:
-            body = await response.json()
+        response = await client.get(f"{http_service}/photos/{p_id}")
+    body = response.json()
 
-    assert response.status == HTTPStatus.OK
-    assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
-    assert type(photo) is dict
+    assert response.status_code == HTTPStatus.OK
+    assert "application/json" in response.headers["content-type"]
     assert body["id"] == p_id
     assert body["name"] == photo["name"]
     assert body["creation_time"] == photo["creation_time"]
@@ -155,50 +144,45 @@ async def test_get_photo_by_id(
 @pytest.mark.asyncio
 async def test_update_photo(http_service: Any, token: MockFixture, photo: dict) -> None:
     """Should return No Content."""
-    url = f"{http_service}/photos?eventId=1e95458c-e000-4d8b-beda-f860c77fd758"
+    list_url = f"{http_service}/photos?eventId=1e95458c-e000-4d8b-beda-f860c77fd758"
     headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token}",
+        "content-type": "application/json",
+        "authorization": f"Bearer {token}",
     }
-
-    async with ClientSession() as session:
-        async with session.get(url) as response:
-            photos = await response.json()
+    async with httpx.AsyncClient() as client:
+        response = await client.get(list_url)
+        photos = response.json()
         p_id = photos[0]["id"]
-        url = f"{http_service}/photos/{p_id}"
+        photo_url = f"{http_service}/photos/{p_id}"
 
         request_body = deepcopy(photo)
-        new_name = "Oslo Skagen sprint updated"
         request_body["id"] = p_id
-        request_body["name"] = new_name
+        request_body["name"] = "Oslo Skagen sprint updated"
 
-        async with session.put(url, headers=headers, json=request_body) as response:
-            assert response.status == HTTPStatus.NO_CONTENT
+        response = await client.put(photo_url, headers=headers, json=request_body)
+        assert response.status_code == HTTPStatus.NO_CONTENT
 
-        async with session.get(url) as response:
-            assert response.status == HTTPStatus.OK
-            updated_photo = await response.json()
-            assert updated_photo["name"] == new_name
-            assert updated_photo["creation_time"] == photo["creation_time"]
-            assert updated_photo["information"] == photo["information"]
+        response = await client.get(photo_url)
+        assert response.status_code == HTTPStatus.OK
+        updated_photo = response.json()
+        assert updated_photo["name"] == "Oslo Skagen sprint updated"
+        assert updated_photo["creation_time"] == photo["creation_time"]
+        assert updated_photo["information"] == photo["information"]
 
 
 @pytest.mark.contract
 @pytest.mark.asyncio
 async def test_delete_photo(http_service: Any, token: MockFixture) -> None:
     """Should return No Content."""
-    url = f"{http_service}/photos?eventId=1e95458c-e000-4d8b-beda-f860c77fd758"
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
-
-    async with ClientSession() as session:
-        async with session.get(url) as response:
-            photos = await response.json()
+    list_url = f"{http_service}/photos?eventId=1e95458c-e000-4d8b-beda-f860c77fd758"
+    headers = {"authorization": f"Bearer {token}"}
+    async with httpx.AsyncClient() as client:
+        response = await client.get(list_url)
+        photos = response.json()
         p_id = photos[0]["id"]
-        url = f"{http_service}/photos/{p_id}"
-        async with session.delete(url, headers=headers) as response:
-            assert response.status == HTTPStatus.NO_CONTENT
+        photo_url = f"{http_service}/photos/{p_id}"
+        response = await client.delete(photo_url, headers=headers)
+        assert response.status_code == HTTPStatus.NO_CONTENT
 
-        async with session.get(url) as response:
-            assert response.status == HTTPStatus.NOT_FOUND
+        response = await client.get(photo_url)
+        assert response.status_code == HTTPStatus.NOT_FOUND
