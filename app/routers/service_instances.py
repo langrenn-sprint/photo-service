@@ -5,7 +5,7 @@ import logging
 import os
 from http import HTTPStatus
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Path
 from fastapi.responses import Response
 
 from app.authorization import RoleChecker, UserRole
@@ -88,13 +88,16 @@ async def get_service_instance(serviceInstanceId: str) -> Response:
     status_code=204,
     dependencies=[Depends(RoleChecker([UserRole.Admin, UserRole.PhotoAdmin]))],
 )
-async def update_service_instance(serviceInstanceId: str, service_instance: ServiceInstance) -> Response:
+async def update_service_instance(
+    service_instance: ServiceInstance,
+    service_instance_id: str = Path(..., alias="serviceInstanceId"),
+) -> Response:
     """Update service instance route function."""
     logging.debug(
         f"Got put request for service instance {service_instance} of type {type(service_instance)}"
     )
     try:
-        await ServiceInstancesService.update_service_instance(serviceInstanceId, service_instance)
+        await ServiceInstancesService.update_service_instance(service_instance_id, service_instance)
     except IllegalValueError as e:
         raise HTTPException(
             status_code=HTTPStatus.UNPROCESSABLE_ENTITY, detail=str(e)
