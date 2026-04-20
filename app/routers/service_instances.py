@@ -4,8 +4,9 @@ import json
 import logging
 import os
 from http import HTTPStatus
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Path
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
 
 from app.authorization import RoleChecker, UserRole
@@ -25,21 +26,21 @@ router = APIRouter()
 
 @router.get("/service-instances")
 async def get_service_instances(
-    eventId: str = "",
-    serviceType: str | None = None,
+    event_id: Annotated[str, Query(alias="eventId")] = "",
+    service_type: Annotated[str | None, Query(alias="serviceType")] = None,
     status: str | None = None,
 ) -> Response:
     """Get service instances route function."""
-    if serviceType is not None:
+    if service_type is not None:
         service_instances = await ServiceInstancesService.get_service_instances_by_service_type(
-            eventId, serviceType
+            event_id, service_type
         )
     elif status is not None:
         service_instances = await ServiceInstancesService.get_service_instances_by_status(
-            eventId, status
+            event_id, status
         )
     else:
-        service_instances = await ServiceInstancesService.get_all_service_instances(eventId)
+        service_instances = await ServiceInstancesService.get_all_service_instances(event_id)
     _list = [si.model_dump() for si in service_instances]
     body = json.dumps(_list, default=str, ensure_ascii=False)
     return Response(status_code=200, content=body, media_type="application/json")
@@ -70,12 +71,12 @@ async def create_service_instance(service_instance: ServiceInstance) -> Response
     raise HTTPException(status_code=HTTPStatus.BAD_REQUEST) from None
 
 
-@router.get("/service-instances/{serviceInstanceId}")
-async def get_service_instance(serviceInstanceId: str) -> Response:
+@router.get("/service-instances/{service_instance_id}")
+async def get_service_instance(service_instance_id: str) -> Response:
     """Get service instance by id route function."""
-    logging.debug(f"Got get request for service instance {serviceInstanceId}")
+    logging.debug(f"Got get request for service instance {service_instance_id}")
     try:
-        service_instance = await ServiceInstancesService.get_service_instance_by_id(serviceInstanceId)
+        service_instance = await ServiceInstancesService.get_service_instance_by_id(service_instance_id)
     except ServiceInstanceNotFoundError as e:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=str(e)) from e
     logging.debug(f"Got service instance: {service_instance}")
@@ -84,13 +85,13 @@ async def get_service_instance(serviceInstanceId: str) -> Response:
 
 
 @router.put(
-    "/service-instances/{serviceInstanceId}",
+    "/service-instances/{service_instance_id}",
     status_code=204,
     dependencies=[Depends(RoleChecker([UserRole.Admin, UserRole.PhotoAdmin]))],
 )
 async def update_service_instance(
     service_instance: ServiceInstance,
-    service_instance_id: str = Path(..., alias="serviceInstanceId"),
+    service_instance_id: str,
 ) -> Response:
     """Update service instance route function."""
     logging.debug(
@@ -108,15 +109,15 @@ async def update_service_instance(
 
 
 @router.delete(
-    "/service-instances/{serviceInstanceId}",
+    "/service-instances/{service_instance_id}",
     status_code=204,
     dependencies=[Depends(RoleChecker([UserRole.Admin, UserRole.PhotoAdmin]))],
 )
-async def delete_service_instance(serviceInstanceId: str) -> Response:
+async def delete_service_instance(service_instance_id: str) -> Response:
     """Delete service instance route function."""
-    logging.debug(f"Got delete request for service instance {serviceInstanceId}")
+    logging.debug(f"Got delete request for service instance {service_instance_id}")
     try:
-        await ServiceInstancesService.delete_service_instance(serviceInstanceId)
+        await ServiceInstancesService.delete_service_instance(service_instance_id)
     except ServiceInstanceNotFoundError as e:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=str(e)) from e
     return Response(status_code=204)

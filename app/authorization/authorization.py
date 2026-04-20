@@ -21,9 +21,44 @@ class TokenError(Exception):
 class TokenMissingError(TokenError):
     """Token missing error."""
 
+    @classmethod
+    def missing_bearer_token(cls) -> "TokenMissingError":
+        """Create error for missing or malformed bearer token header."""
+        return cls("Authorization header missing or not a Bearer token")
+
 
 class TokenValidationError(TokenError):
     """Token validation error."""
+
+    @classmethod
+    def expired_token(cls) -> "TokenValidationError":
+        """Create error for expired JWT token."""
+        return cls("Token has expired")
+
+    @classmethod
+    def invalid_signature(cls) -> "TokenValidationError":
+        """Create error for invalid JWT signature."""
+        return cls("Token signature is invalid")
+
+    @classmethod
+    def decode_error(cls) -> "TokenValidationError":
+        """Create error for undecodable JWT token."""
+        return cls("Token could not be decoded")
+
+    @classmethod
+    def missing_required_claim(cls, error: Exception) -> "TokenValidationError":
+        """Create error for missing required JWT claim."""
+        return cls(f"Token is missing required claim: {error!s}")
+
+    @classmethod
+    def invalid_token(cls) -> "TokenValidationError":
+        """Create error for other invalid JWT token cases."""
+        return cls("Token is invalid")
+
+    @classmethod
+    def missing_expected_claim(cls, error: Exception) -> "TokenValidationError":
+        """Create error for missing token claims required by this service."""
+        return cls(f"Missing expected claim in token: {error}")
 
 
 class APIConfigurationError(TokenError):
@@ -47,15 +82,15 @@ class TokenValidator:
                 raise APIConfigurationError(msg)
             return jwt.decode(token, secret_key, algorithms=["HS256"])
         except jwt.ExpiredSignatureError as e:
-            raise TokenValidationError("Token has expired") from e
+            raise TokenValidationError.expired_token() from e
         except jwt.InvalidSignatureError as e:
-            raise TokenValidationError("Token signature is invalid") from e
+            raise TokenValidationError.invalid_signature() from e
         except jwt.DecodeError as e:
-            raise TokenValidationError("Token could not be decoded") from e
+            raise TokenValidationError.decode_error() from e
         except jwt.MissingRequiredClaimError as e:
-            raise TokenValidationError(f"Token is missing required claim: {e!s}") from e
+            raise TokenValidationError.missing_required_claim(e) from e
         except jwt.InvalidTokenError as e:
-            raise TokenValidationError("Token is invalid") from e
+            raise TokenValidationError.invalid_token() from e
 
 
 @dataclass
@@ -80,7 +115,7 @@ async def get_current_token(
         token = http_credentials.credentials
 
     if not token:
-        raise TokenMissingError("Authorization header missing or not a Bearer token")
+        raise TokenMissingError.missing_bearer_token()
 
     validator = TokenValidator()
     payload = validator.validate_token(token)
@@ -92,7 +127,7 @@ async def get_current_token(
         exp = payload["exp"]
         return TokenData(sub=sub, name=name, roles=[role], exp=exp)
     except KeyError as e:
-        raise TokenValidationError(f"Missing expected claim in token: {e}") from e
+        raise TokenValidationError.missing_expected_claim(e) from e
 
 
 class UserRole(StrEnum):

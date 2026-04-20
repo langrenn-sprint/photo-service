@@ -4,8 +4,9 @@ import json
 import logging
 import os
 from http import HTTPStatus
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
 
 from app.authorization import RoleChecker, UserRole
@@ -25,15 +26,15 @@ router = APIRouter()
 
 @router.get("/status")
 async def get_status(
-    eventId: str,
+    event_id: Annotated[str, Query(alias="eventId")],
     count: int = 25,
-    type: str | None = None,
+    status_type: Annotated[str | None, Query(alias="type")] = None,
 ) -> Response:
     """Get status route function."""
-    if type is not None:
-        status_list = await StatusService.get_all_status_by_type(eventId, type, count)
+    if status_type is not None:
+        status_list = await StatusService.get_all_status_by_type(event_id, status_type, count)
     else:
-        status_list = await StatusService.get_all_status(eventId, count)
+        status_list = await StatusService.get_all_status(event_id, count)
     _list = [s.model_dump() for s in status_list]
     body = json.dumps(_list, default=str, ensure_ascii=False)
     return Response(status_code=200, content=body, media_type="application/json")
@@ -63,15 +64,15 @@ async def create_status(status: Status) -> Response:
 
 
 @router.delete(
-    "/status/{statusId}",
+    "/status/{status_id}",
     status_code=204,
     dependencies=[Depends(RoleChecker([UserRole.Admin, UserRole.StatusAdmin]))],
 )
-async def delete_status(statusId: str) -> Response:
+async def delete_status(status_id: str) -> Response:
     """Delete status route function."""
-    logging.debug(f"Got delete request for status {statusId}")
+    logging.debug(f"Got delete request for status {status_id}")
     try:
-        await StatusService.delete_status(statusId)
+        await StatusService.delete_status(status_id)
     except StatusNotFoundError as e:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=str(e)) from e
     return Response(status_code=204)

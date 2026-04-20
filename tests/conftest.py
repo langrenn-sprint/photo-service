@@ -3,15 +3,17 @@
 import os
 import time
 from http import HTTPStatus
+from os import environ as env
+from typing import Any
 
 import pytest
 import requests
 from fastapi.testclient import TestClient
-from requests.exceptions import ConnectionError as _ConnectionError
+from requests.exceptions import ConnectionError  # noqa: A004
 
 from app import api
 
-HOST_PORT = int(os.getenv("HOST_PORT", "8080"))
+HOST_PORT = int(env.get("HOST_PORT", "8080"))
 
 
 @pytest.fixture
@@ -20,22 +22,22 @@ def client() -> TestClient:
     return TestClient(api)
 
 
-def is_responsive(url: str) -> bool:
+def is_responsive(url: Any) -> Any:
     """Return true if response from service is 200."""
     url = f"{url}/ready"
     try:
-        response = requests.get(url, timeout=60)
+        response = requests.get(url, timeout=30)
         if response.status_code == HTTPStatus.OK:
-            time.sleep(2)
+            time.sleep(2)  # sleep extra 2 sec
             return True
-    except _ConnectionError:
+    except ConnectionError:
         return False
-    return False
 
 
 @pytest.fixture(scope="session")
-def http_service(docker_ip: str, docker_services: object) -> str:
+def http_service(docker_ip: Any, docker_services: Any) -> Any:
     """Ensure that HTTP service is up and responsive."""
+    # `port_for` takes a container port and returns the corresponding host port
     port = docker_services.port_for("photo-service", HOST_PORT)
     url = f"http://{docker_ip}:{port}"
     docker_services.wait_until_responsive(
@@ -45,12 +47,12 @@ def http_service(docker_ip: str, docker_services: object) -> str:
 
 
 @pytest.fixture(scope="session")
-def docker_compose_file(pytestconfig: object) -> str:
+def docker_compose_file(pytestconfig: Any) -> Any:
     """Override default location of docker-compose.yml file."""
     return os.path.join(str(pytestconfig.rootdir), "./", "docker-compose.yml")
 
 
 @pytest.fixture(scope="session")
-def docker_cleanup(pytestconfig: object) -> str:
+def docker_cleanup(pytestconfig: Any) -> Any:
     """Override default location of docker-compose.yml file."""
     return "stop"

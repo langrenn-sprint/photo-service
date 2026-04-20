@@ -4,9 +4,11 @@ import json
 import logging
 import os
 from http import HTTPStatus
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
+from pydantic import BaseModel, Field
 
 from app.authorization import RoleChecker, UserRole
 from app.models import Photo
@@ -23,45 +25,49 @@ BASE_URL = f"http://{HOST_SERVER}:{HOST_PORT}"
 router = APIRouter()
 
 
+class PhotosQueryParams(BaseModel):
+    """Query parameters for filtering photos."""
+
+    event_id: str = Field(default="", alias="eventId")
+    g_id: str | None = Field(default=None, alias="gId")
+    g_base_url: str | None = Field(default=None, alias="gBaseUrl")
+    raceclass: str | None = None
+    race_id: str | None = Field(default=None, alias="raceId")
+    starred: bool = False
+    limit: int | None = None
+
+
 @router.get("/photos")
-async def get_photos(
-    eventId: str = "",
-    gId: str | None = None,
-    gBaseUrl: str | None = None,
-    raceclass: str | None = None,
-    raceId: str | None = None,
-    starred: bool = False,
-    limit: int | None = None,
-) -> Response:
+async def get_photos(params: Annotated[PhotosQueryParams, Query()]) -> Response:
     """Get photos route function."""
-    if gId is not None:
-        photo = await PhotosService.get_photo_by_g_id(gId)
+    if params.g_id is not None:
+        photo = await PhotosService.get_photo_by_g_id(params.g_id)
         body = photo.model_dump_json()
         return Response(status_code=200, content=body, media_type="application/json")
-    if gBaseUrl is not None:
-        photo = await PhotosService.get_photo_by_g_base_url(gBaseUrl)
+    if params.g_base_url is not None:
+        photo = await PhotosService.get_photo_by_g_base_url(params.g_base_url)
         body = photo.model_dump_json()
         return Response(status_code=200, content=body, media_type="application/json")
 
-    if raceclass is not None:
-        if starred:
-            photos = await PhotosService.get_photos_starred_by_raceclass(eventId, raceclass)
+    if params.raceclass is not None:
+        if params.starred:
+            photos = await PhotosService.get_photos_starred_by_raceclass(params.event_id, params.raceclass)
         else:
-            photos = await PhotosService.get_photos_by_raceclass(eventId, raceclass)
-    elif raceId is not None:
-        photos = await PhotosService.get_photos_by_race_id(raceId)
-    elif starred:
-        photos = await PhotosService.get_photos_starred(eventId)
+            photos = await PhotosService.get_photos_by_raceclass(params.event_id, params.raceclass)
+    elif params.race_id is not None:
+        photos = await PhotosService.get_photos_by_race_id(params.race_id)
+    elif params.starred:
+        photos = await PhotosService.get_photos_starred(params.event_id)
     else:
-        photos = await PhotosService.get_all_photos(eventId)
+        photos = await PhotosService.get_all_photos(params.event_id)
 
     _list = [p.model_dump() for p in photos]
 
-    if limit is not None:
+    if params.limit is not None:
         limited_list: list = []
         i = 0
         for photo_dict in reversed(_list):
-            if i < limit:
+            if i < params.limit:
                 if photo_dict["starred"]:
                     limited_list.append(photo_dict)
                     i += 1
@@ -69,7 +75,7 @@ async def get_photos(
                 break
         else:
             for photo_dict in reversed(_list):
-                if i < limit:
+                if i < params.limit:
                     if not photo_dict["starred"]:
                         limited_list.append(photo_dict)
                         i += 1
@@ -105,12 +111,12 @@ async def create_photo(photo: Photo) -> Response:
     raise HTTPException(status_code=HTTPStatus.BAD_REQUEST) from None
 
 
-@router.get("/photos/{photoId}")
-async def get_photo(photoId: str) -> Response:
+@router.get("/photos/{photo_id}")
+async def get_photo(photo_id: str) -> Response:
     """Get photo by id route function."""
-    logging.debug(f"Got get request for photo {photoId}")
+    logging.debug(f"Got get request for photo {photo_id}")
     try:
-        photo = await PhotosService.get_photo_by_id(photoId)
+        photo = await PhotosService.get_photo_by_id(photo_id)
     except PhotoNotFoundError as e:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=str(e)) from e
     logging.debug(f"Got photo: {photo}")
@@ -119,15 +125,15 @@ async def get_photo(photoId: str) -> Response:
 
 
 @router.put(
-    "/photos/{photoId}",
+    "/photos/{photo_id}",
     status_code=204,
     dependencies=[Depends(RoleChecker([UserRole.Admin, UserRole.PhotoAdmin]))],
 )
-async def update_photo(photoId: str, photo: Photo) -> Response:
+async def update_photo(photo_id: str, photo: Photo) -> Response:
     """Update photo route function."""
     logging.debug(f"Got put request for photo {photo} of type {type(photo)}")
     try:
-        await PhotosService.update_photo(photoId, photo)
+        await PhotosService.update_photo(photo_id, photo)
     except IllegalValueError as e:
         raise HTTPException(
             status_code=HTTPStatus.UNPROCESSABLE_ENTITY, detail=str(e)
@@ -138,15 +144,15 @@ async def update_photo(photoId: str, photo: Photo) -> Response:
 
 
 @router.delete(
-    "/photos/{photoId}",
+    "/photos/{photo_id}",
     status_code=204,
     dependencies=[Depends(RoleChecker([UserRole.Admin, UserRole.PhotoAdmin]))],
 )
-async def delete_photo(photoId: str) -> Response:
+async def delete_photo(photo_id: str) -> Response:
     """Delete photo route function."""
-    logging.debug(f"Got delete request for photo {photoId}")
+    logging.debug(f"Got delete request for photo {photo_id}")
     try:
-        await PhotosService.delete_photo(photoId)
+        await PhotosService.delete_photo(photo_id)
     except PhotoNotFoundError as e:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=str(e)) from e
     return Response(status_code=204)

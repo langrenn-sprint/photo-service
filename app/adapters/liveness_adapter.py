@@ -21,6 +21,7 @@ class LivenessAdapter:
         """Check if the database is ready."""
         try:
             await cls.database.command("ping")
-            return True
         except Exception:
             return False
+        else:
+            return True

@@ -4,8 +4,9 @@ import json
 import logging
 import os
 from http import HTTPStatus
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
 
 from app.authorization import RoleChecker, UserRole
@@ -24,10 +25,10 @@ router = APIRouter()
 
 
 @router.get("/config")
-async def get_config(key: str, eventId: str) -> Response:
+async def get_config(key: str, event_id: Annotated[str, Query(alias="eventId")]) -> Response:
     """Get config by key route function."""
     try:
-        config = await ConfigService.get_config_by_key(eventId, key)
+        config = await ConfigService.get_config_by_key(event_id, key)
     except ConfigNotFoundError as e:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=str(e)) from e
     body = config.model_dump_json()
@@ -77,24 +78,24 @@ async def update_config(config: Config) -> Response:
 
 
 @router.delete(
-    "/config/{configId}",
+    "/config/{config_id}",
     status_code=204,
     dependencies=[Depends(RoleChecker([UserRole.Admin, UserRole.ConfigAdmin]))],
 )
-async def delete_config(configId: str) -> Response:
+async def delete_config(config_id: str) -> Response:
     """Delete config route function."""
-    logging.debug(f"Got delete request for config {configId}")
+    logging.debug(f"Got delete request for config {config_id}")
     try:
-        await ConfigService.delete_config(configId)
+        await ConfigService.delete_config(config_id)
     except ConfigNotFoundError as e:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=str(e)) from e
     return Response(status_code=204)
 
 
 @router.get("/configs")
-async def get_configs(eventId: str | None = None) -> Response:
+async def get_configs(event_id: Annotated[str | None, Query(alias="eventId")] = None) -> Response:
     """Get all configs route function."""
-    configs = await ConfigService.get_all_configs(eventId)
+    configs = await ConfigService.get_all_configs(event_id)
     _list = [c.model_dump() for c in configs]
     body = json.dumps(_list, default=str, ensure_ascii=False)
     return Response(status_code=200, content=body, media_type="application/json")

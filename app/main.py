@@ -22,7 +22,16 @@ from .authorization import (
     TokenMissingError,
     TokenValidationError,
 )
-from .routers import albums, config, g_photos, photos, ping, ready, service_instances, status
+from .routers import (
+    albums,
+    config,
+    g_photos,
+    photos,
+    ping,
+    ready,
+    service_instances,
+    status,
+)
 
 DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_PORT = int(os.getenv("DB_PORT", "27017"))
@@ -32,18 +41,22 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 
 
 class EndpointFilter(logging.Filter):
+    """Filter out access log records for excluded endpoint paths."""
+
     def __init__(self, excluded_endpoints: list[str]) -> None:
+        """Store endpoint paths that should be ignored by the access logger."""
         super().__init__()
         self.excluded_endpoints = excluded_endpoints
 
     def filter(self, record: logging.LogRecord) -> bool:  # pragma: no cover
-        if (
-            record.args
-            and len(record.args) >= 3
-            and record.args[2] in self.excluded_endpoints
-        ):
-            return False
-        return True
+        """Return True when the record endpoint should be logged."""
+        args = record.args
+        return not (
+            isinstance(args, tuple)
+            and len(args) >= 3
+            and isinstance(args[2], str)
+            and args[2] in self.excluded_endpoints
+        )
 
 
 logger = logging.getLogger("uvicorn.error")
@@ -54,6 +67,7 @@ access_logger.addFilter(EndpointFilter(excluded_endpoints))
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None]:  # noqa: ARG001  # pragma: no cover
+    """Initialize and close database-backed adapters for the app lifecycle."""
     logger.debug(f"Connecting to db at {DB_HOST}:{DB_PORT}")
     mongo = motor.motor_asyncio.AsyncIOMotorClient(
         host=DB_HOST,
@@ -86,6 +100,7 @@ api = FastAPI(
 
 @api.exception_handler(TokenError)
 async def token_exception_handler(request: Request, exc: TokenError) -> JSONResponse:  # pragma: no cover
+    """Return a consistent JSON response for token-related authorization errors."""
     _ = request
     if isinstance(exc, TokenMissingError):
         return JSONResponse(status_code=401, content={"detail": "Not authenticated"})

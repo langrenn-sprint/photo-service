@@ -4,8 +4,9 @@ import json
 import logging
 import os
 from http import HTTPStatus
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
 
 from app.authorization import RoleChecker, UserRole
@@ -24,10 +25,10 @@ router = APIRouter()
 
 
 @router.get("/albums")
-async def get_albums(gId: str | None = None) -> Response:
+async def get_albums(g_id: Annotated[str | None, Query(alias="gId")] = None) -> Response:
     """Get albums route function."""
-    if gId is not None:
-        album = await AlbumsService.get_album_by_g_id(gId)
+    if g_id is not None:
+        album = await AlbumsService.get_album_by_g_id(g_id)
         body = album.model_dump_json()
         return Response(status_code=200, content=body, media_type="application/json")
     albums = await AlbumsService.get_all_albums()
@@ -59,12 +60,12 @@ async def create_album(album: Album) -> Response:
     raise HTTPException(status_code=HTTPStatus.BAD_REQUEST) from None
 
 
-@router.get("/albums/{albumId}")
-async def get_album(albumId: str) -> Response:
+@router.get("/albums/{album_id}")
+async def get_album(album_id: str) -> Response:
     """Get album by id route function."""
-    logging.debug(f"Got get request for album {albumId}")
+    logging.debug(f"Got get request for album {album_id}")
     try:
-        album = await AlbumsService.get_album_by_id(albumId)
+        album = await AlbumsService.get_album_by_id(album_id)
     except AlbumNotFoundError as e:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=str(e)) from e
     logging.debug(f"Got album: {album}")
@@ -73,15 +74,15 @@ async def get_album(albumId: str) -> Response:
 
 
 @router.put(
-    "/albums/{albumId}",
+    "/albums/{album_id}",
     status_code=204,
     dependencies=[Depends(RoleChecker([UserRole.Admin, UserRole.AlbumAdmin]))],
 )
-async def update_album(albumId: str, album: Album) -> Response:
+async def update_album(album_id: str, album: Album) -> Response:
     """Update album route function."""
     logging.debug(f"Got put request for album {album} of type {type(album)}")
     try:
-        await AlbumsService.update_album(albumId, album)
+        await AlbumsService.update_album(album_id, album)
     except IllegalValueError as e:
         raise HTTPException(
             status_code=HTTPStatus.UNPROCESSABLE_ENTITY, detail=str(e)
@@ -92,15 +93,15 @@ async def update_album(albumId: str, album: Album) -> Response:
 
 
 @router.delete(
-    "/albums/{albumId}",
+    "/albums/{album_id}",
     status_code=204,
     dependencies=[Depends(RoleChecker([UserRole.Admin, UserRole.AlbumAdmin]))],
 )
-async def delete_album(albumId: str) -> Response:
+async def delete_album(album_id: str) -> Response:
     """Delete album route function."""
-    logging.debug(f"Got delete request for album {albumId}")
+    logging.debug(f"Got delete request for album {album_id}")
     try:
-        await AlbumsService.delete_album(albumId)
+        await AlbumsService.delete_album(album_id)
     except AlbumNotFoundError as e:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=str(e)) from e
     return Response(status_code=204)
