@@ -16,7 +16,7 @@ authors = [
 ]
 dependencies = [
     "PyJWT>=2.1.0",
-    "fastapi>=0.135.3",
+    "fastapi[standard]>=0.135.3",
     "httpx>=0.28.1",
     "motor>=3.3.2",
     "pydantic>=2.12.5",
@@ -123,6 +123,7 @@ show_missing = true
 
 
 [tool.pytest.ini_options]
+asyncio_mode = "auto"
 env = [
     "ADMIN_USERNAME=admin",
     "ADMIN_PASSWORD=password",

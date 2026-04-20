@@ -118,7 +118,15 @@ To run tests with logging, do:
 
 ```Zsh
 % uv run pytest -m integration -- --log-cli-level=DEBUG
+% uv run pytest -m contract -s
 ```
+To stop running containers:
+
+```Zsh
+% docker rm -f $(docker ps -q)
+```
+
+
 To upgrade:
 
 ```Zsh

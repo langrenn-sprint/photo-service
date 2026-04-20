@@ -71,6 +71,26 @@ async def config() -> dict:
 
 @pytest.mark.contract
 @pytest.mark.asyncio
+async def test_create_config(
+    http_service: Any,
+    token: MockFixture,
+    config: dict,
+) -> None:
+    """Should return Created, location header and no body."""
+    headers = {
+        "content-type": "application/json",
+        "authorization": f"Bearer {token}",
+    }
+    url = f"{http_service}/config"
+    async with httpx.AsyncClient() as client:
+        response = await client.post(url, headers=headers, json=config)
+
+    assert response.status_code == HTTPStatus.CREATED
+    assert "/config/" in response.headers["location"]
+
+
+@pytest.mark.contract
+@pytest.mark.asyncio
 async def test_get_config_by_key(
     http_service: Any, token: MockFixture, config: dict
 ) -> None:
