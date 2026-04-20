@@ -6,6 +6,7 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
 import motor.motor_asyncio
+import pymongo.errors
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
@@ -96,6 +97,20 @@ api = FastAPI(
     version="1.0.0",
     separate_input_output_schemas=False,
 )
+
+
+@api.exception_handler(pymongo.errors.PyMongoError)
+async def pymongo_exception_handler(request: Request, exc: pymongo.errors.PyMongoError) -> JSONResponse:  # pragma: no cover
+    """Return a clear JSON response for database errors."""
+    _ = request
+    if isinstance(exc, pymongo.errors.OperationFailure) and exc.code == 18:
+        logger.error("Database authentication failed. Check DB_USER and DB_PASSWORD environment variables.")
+        return JSONResponse(status_code=503, content={"detail": "Database authentication failed. Check DB_USER and DB_PASSWORD environment variables."})
+    if isinstance(exc, (pymongo.errors.ConnectionFailure, pymongo.errors.ServerSelectionTimeoutError)):
+        logger.error(f"Database connection failed: {exc}")
+        return JSONResponse(status_code=503, content={"detail": "Cannot connect to database. Check DB_HOST and DB_PORT environment variables."})
+    logger.error(f"Database error: {exc}")
+    return JSONResponse(status_code=503, content={"detail": f"Database error: {exc}"})
 
 
 @api.exception_handler(TokenError)

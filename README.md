@@ -80,14 +80,9 @@ To upgrade:
 Start the server locally:
 
 ```Zsh
-% uv run adev runserver -p 8080 photo_service
+% uv run --env-file=.env fastapi dev app/main.py --port 8092
 ```
 
-## Running the API in a wsgi-server (gunicorn)
-
-```Zsh
-% uv run gunicorn photo_service:create_app --bind localhost:8080 --worker-class aiohttp.GunicornWebWorker
-```
 
 ## Running the wsgi-server in Docker
 
