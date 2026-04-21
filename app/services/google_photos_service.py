@@ -55,9 +55,7 @@ class GooglePhotosService:
             "Authorization": f"Bearer {token}",
         }
         async with httpx.AsyncClient() as session:
-            resp = await session.get(
-                f"{GOOGLE_PHOTO_SERVER}/albums", headers=headers
-            )
+            resp = await session.get(f"{GOOGLE_PHOTO_SERVER}/albums", headers=headers)
             logging.debug(f"{servicename} - got response {resp.status_code}")
             if resp.status_code == HTTPStatus.OK:
                 albums = resp.json()

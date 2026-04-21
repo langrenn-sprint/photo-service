@@ -15,7 +15,11 @@ def token() -> str:
     """Create a valid token."""
     secret = os.getenv("JWT_SECRET")
     algorithm = "HS256"
-    payload = {"username": os.getenv("ADMIN_USERNAME"), "role": "admin", "exp": 9999999999}
+    payload = {
+        "username": os.getenv("ADMIN_USERNAME"),
+        "role": "admin",
+        "exp": 9999999999,
+    }
     return jwt.encode(payload, secret, algorithm)
 
 
@@ -151,9 +155,7 @@ def test_update_album_by_id(
 
 
 @pytest.mark.integration
-def test_get_all_albums(
-    client: TestClient, mocker: MockFixture, token: str
-) -> None:
+def test_get_all_albums(client: TestClient, mocker: MockFixture, token: str) -> None:
     """Should return OK and a valid json body."""
     test_a_id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
@@ -327,9 +329,7 @@ def test_update_album_by_id_different_id_in_body(
 
 
 @pytest.mark.integration
-def test_create_album_no_authorization(
-    client: TestClient, mocker: MockFixture
-) -> None:
+def test_create_album_no_authorization(client: TestClient, mocker: MockFixture) -> None:
     """Should return 401 Unauthorized."""
     test_a_id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(

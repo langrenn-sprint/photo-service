@@ -52,7 +52,9 @@ class PhotosService:
         )
 
     @classmethod
-    async def get_photos_by_raceclass(cls, event_id: str, raceclass: str) -> list[Photo]:
+    async def get_photos_by_raceclass(
+        cls, event_id: str, raceclass: str
+    ) -> list[Photo]:
         """Get all photos for one raceclass function."""
         _photos = await PhotosAdapter.get_photos_by_raceclass(event_id, raceclass)
         photos = [Photo.model_validate(e) for e in _photos]
@@ -78,9 +80,13 @@ class PhotosService:
         )
 
     @classmethod
-    async def get_photos_starred_by_raceclass(cls, event_id: str, raceclass: str) -> list[Photo]:
+    async def get_photos_starred_by_raceclass(
+        cls, event_id: str, raceclass: str
+    ) -> list[Photo]:
         """Get all starred photos by raceclass function."""
-        _photos = await PhotosAdapter.get_photos_starred_by_raceclass(event_id, raceclass)
+        _photos = await PhotosAdapter.get_photos_starred_by_raceclass(
+            event_id, raceclass
+        )
         photos = [Photo.model_validate(e) for e in _photos]
         return sorted(
             photos,

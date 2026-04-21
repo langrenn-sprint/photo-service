@@ -32,15 +32,21 @@ async def get_service_instances(
 ) -> Response:
     """Get service instances route function."""
     if service_type is not None:
-        service_instances = await ServiceInstancesService.get_service_instances_by_service_type(
-            event_id, service_type
+        service_instances = (
+            await ServiceInstancesService.get_service_instances_by_service_type(
+                event_id, service_type
+            )
         )
     elif status is not None:
-        service_instances = await ServiceInstancesService.get_service_instances_by_status(
-            event_id, status
+        service_instances = (
+            await ServiceInstancesService.get_service_instances_by_status(
+                event_id, status
+            )
         )
     else:
-        service_instances = await ServiceInstancesService.get_all_service_instances(event_id)
+        service_instances = await ServiceInstancesService.get_all_service_instances(
+            event_id
+        )
     _list = [si.model_dump() for si in service_instances]
     body = json.dumps(_list, default=str, ensure_ascii=False)
     return Response(status_code=200, content=body, media_type="application/json")
@@ -57,13 +63,17 @@ async def create_service_instance(service_instance: ServiceInstance) -> Response
         f"Got create request for service instance {service_instance} of type {type(service_instance)}"
     )
     try:
-        service_instance_id = await ServiceInstancesService.create_service_instance(service_instance)
+        service_instance_id = await ServiceInstancesService.create_service_instance(
+            service_instance
+        )
     except IllegalValueError as e:
         raise HTTPException(
             status_code=HTTPStatus.UNPROCESSABLE_ENTITY, detail=str(e)
         ) from e
     if service_instance_id:
-        logging.debug(f"inserted document with service_instance_id {service_instance_id}")
+        logging.debug(
+            f"inserted document with service_instance_id {service_instance_id}"
+        )
         return Response(
             status_code=201,
             headers={"Location": f"{BASE_URL}/service-instances/{service_instance_id}"},
@@ -76,7 +86,9 @@ async def get_service_instance(service_instance_id: str) -> Response:
     """Get service instance by id route function."""
     logging.debug(f"Got get request for service instance {service_instance_id}")
     try:
-        service_instance = await ServiceInstancesService.get_service_instance_by_id(service_instance_id)
+        service_instance = await ServiceInstancesService.get_service_instance_by_id(
+            service_instance_id
+        )
     except ServiceInstanceNotFoundError as e:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=str(e)) from e
     logging.debug(f"Got service instance: {service_instance}")
@@ -98,7 +110,9 @@ async def update_service_instance(
         f"Got put request for service instance {service_instance} of type {type(service_instance)}"
     )
     try:
-        await ServiceInstancesService.update_service_instance(service_instance_id, service_instance)
+        await ServiceInstancesService.update_service_instance(
+            service_instance_id, service_instance
+        )
     except IllegalValueError as e:
         raise HTTPException(
             status_code=HTTPStatus.UNPROCESSABLE_ENTITY, detail=str(e)

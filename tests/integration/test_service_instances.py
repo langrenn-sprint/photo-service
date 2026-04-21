@@ -15,7 +15,11 @@ def token() -> str:
     """Create a valid token."""
     secret = os.getenv("JWT_SECRET")
     algorithm = "HS256"
-    payload = {"username": os.getenv("ADMIN_USERNAME"), "role": "admin", "exp": 9999999999}
+    payload = {
+        "username": os.getenv("ADMIN_USERNAME"),
+        "role": "admin",
+        "exp": 9999999999,
+    }
     return jwt.encode(payload, secret, algorithm)
 
 
@@ -176,7 +180,9 @@ def test_get_service_instances_by_service_type(
         ],
     )
 
-    resp = client.get(f"/service-instances?eventId={event_id}&serviceType={service_type}")
+    resp = client.get(
+        f"/service-instances?eventId={event_id}&serviceType={service_type}"
+    )
     assert resp.status_code == HTTPStatus.OK
     assert "application/json" in resp.headers["content-type"]
     service_instances = resp.json()

@@ -47,9 +47,13 @@ class StatusService:
         return [Status.model_validate(e) for e in _status]
 
     @classmethod
-    async def get_all_status_by_type(cls, event_id: str, status_type: str, count: int) -> list[Status]:
+    async def get_all_status_by_type(
+        cls, event_id: str, status_type: str, count: int
+    ) -> list[Status]:
         """Get status by type function."""
-        _status = await StatusAdapter.get_all_status_by_type(event_id, status_type, count)
+        _status = await StatusAdapter.get_all_status_by_type(
+            event_id, status_type, count
+        )
         return [Status.model_validate(e) for e in _status]
 
     @classmethod

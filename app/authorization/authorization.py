@@ -107,7 +107,9 @@ bearer_scheme = HTTPBearer(auto_error=False)
 
 
 async def get_current_token(
-    http_credentials: Annotated[HTTPAuthorizationCredentials | None, Security(bearer_scheme)],
+    http_credentials: Annotated[
+        HTTPAuthorizationCredentials | None, Security(bearer_scheme)
+    ],
 ) -> TokenData:  # pragma: no cover
     """Extract and validate JWT token from request."""
     token = None
@@ -148,10 +150,14 @@ class RoleChecker:
         """Initialize with allowed roles."""
         self.allowed_roles = allowed_roles
 
-    async def __call__(self, token_data: Annotated[TokenData, Depends(get_current_token)]) -> None:
+    async def __call__(
+        self, token_data: Annotated[TokenData, Depends(get_current_token)]
+    ) -> None:
         """Check if the user has an allowed role."""
         user_roles = token_data.roles
         for role in user_roles:
             if role in [allowed_role.value for allowed_role in self.allowed_roles]:
                 return
-        raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail="Operation forbidden")
+        raise HTTPException(
+            status_code=HTTPStatus.FORBIDDEN, detail="Operation forbidden"
+        )

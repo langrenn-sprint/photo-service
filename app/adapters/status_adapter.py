@@ -27,7 +27,9 @@ class StatusAdapter:
         return await cls.database.status_collection.find_one({"id": c_id})
 
     @classmethod
-    async def get_all_status(cls, event_id: str, count: int) -> list[dict]:  # pragma: no cover
+    async def get_all_status(
+        cls, event_id: str, count: int
+    ) -> list[dict]:  # pragma: no cover
         """Get latest status function."""
         try:
             cursor = (
@@ -42,11 +44,15 @@ class StatusAdapter:
         return []
 
     @classmethod
-    async def get_all_status_by_type(cls, event_id: str, status_type: str, count: int) -> list[dict]:  # pragma: no cover
+    async def get_all_status_by_type(
+        cls, event_id: str, status_type: str, count: int
+    ) -> list[dict]:  # pragma: no cover
         """Get latest status by type function."""
         try:
             cursor = (
-                cls.database.status_collection.find({"type": status_type, "event_id": event_id})
+                cls.database.status_collection.find(
+                    {"type": status_type, "event_id": event_id}
+                )
                 .sort("time", -1)
                 .limit(count)
             )

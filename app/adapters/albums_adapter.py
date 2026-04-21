@@ -38,7 +38,9 @@ class AlbumsAdapter:
         return await cls.database.albums_collection.find_one({"id": c_id})
 
     @classmethod
-    async def update_album(cls, c_id: str, album: dict) -> str | None:  # pragma: no cover
+    async def update_album(
+        cls, c_id: str, album: dict
+    ) -> str | None:  # pragma: no cover
         """Update album function."""
         return await cls.database.albums_collection.replace_one({"id": c_id}, album)
 

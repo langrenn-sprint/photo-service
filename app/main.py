@@ -100,28 +100,52 @@ api = FastAPI(
 
 
 @api.exception_handler(pymongo.errors.PyMongoError)
-async def pymongo_exception_handler(request: Request, exc: pymongo.errors.PyMongoError) -> JSONResponse:  # pragma: no cover
+async def pymongo_exception_handler(
+    request: Request, exc: pymongo.errors.PyMongoError
+) -> JSONResponse:  # pragma: no cover
     """Return a clear JSON response for database errors."""
     _ = request
     if isinstance(exc, pymongo.errors.OperationFailure) and exc.code == 18:
-        logger.error("Database authentication failed. Check DB_USER and DB_PASSWORD environment variables.")
-        return JSONResponse(status_code=503, content={"detail": "Database authentication failed. Check DB_USER and DB_PASSWORD environment variables."})
-    if isinstance(exc, (pymongo.errors.ConnectionFailure, pymongo.errors.ServerSelectionTimeoutError)):
+        logger.error(
+            "Database authentication failed. Check DB_USER and DB_PASSWORD environment variables."
+        )
+        return JSONResponse(
+            status_code=503,
+            content={
+                "detail": "Database authentication failed. Check DB_USER and DB_PASSWORD environment variables."
+            },
+        )
+    if isinstance(
+        exc,
+        (pymongo.errors.ConnectionFailure, pymongo.errors.ServerSelectionTimeoutError),
+    ):
         logger.error(f"Database connection failed: {exc}")
-        return JSONResponse(status_code=503, content={"detail": "Cannot connect to database. Check DB_HOST and DB_PORT environment variables."})
+        return JSONResponse(
+            status_code=503,
+            content={
+                "detail": "Cannot connect to database. Check DB_HOST and DB_PORT environment variables."
+            },
+        )
     logger.error(f"Database error: {exc}")
     return JSONResponse(status_code=503, content={"detail": f"Database error: {exc}"})
 
 
 @api.exception_handler(TokenError)
-async def token_exception_handler(request: Request, exc: TokenError) -> JSONResponse:  # pragma: no cover
+async def token_exception_handler(
+    request: Request, exc: TokenError
+) -> JSONResponse:  # pragma: no cover
     """Return a consistent JSON response for token-related authorization errors."""
     _ = request
     if isinstance(exc, TokenMissingError):
         return JSONResponse(status_code=401, content={"detail": "Not authenticated"})
     if isinstance(exc, TokenValidationError):
-        return JSONResponse(status_code=403, content={"detail": "Not authorized to access this resource"})
-    return JSONResponse(status_code=403, content={"detail": "Not authorized to access this resource"})
+        return JSONResponse(
+            status_code=403,
+            content={"detail": "Not authorized to access this resource"},
+        )
+    return JSONResponse(
+        status_code=403, content={"detail": "Not authorized to access this resource"}
+    )
 
 
 api.include_router(ping.router)

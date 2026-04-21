@@ -8,4 +8,12 @@ from .service_instance_model import ServiceInstance
 from .status_model import Status
 from .video_event_model import VideoEvent
 
-__all__ = ["Album", "Changelog", "Config", "Photo", "ServiceInstance", "Status", "VideoEvent"]
+__all__ = [
+    "Album",
+    "Changelog",
+    "Config",
+    "Photo",
+    "ServiceInstance",
+    "Status",
+    "VideoEvent",
+]

@@ -28,13 +28,17 @@ class ConfigAdapter:
         return await cursor.to_list(None)
 
     @classmethod
-    async def get_all_configs_by_event(cls, event_id: str) -> list[dict]:  # pragma: no cover
+    async def get_all_configs_by_event(
+        cls, event_id: str
+    ) -> list[dict]:  # pragma: no cover
         """Get all configs by event function."""
         cursor = cls.database.configs_collection.find({"event_id": event_id})
         return await cursor.to_list(None)
 
     @classmethod
-    async def get_config_by_key(cls, event_id: str, key: str) -> dict:  # pragma: no cover
+    async def get_config_by_key(
+        cls, event_id: str, key: str
+    ) -> dict:  # pragma: no cover
         """Get config by key function."""
         return await cls.database.configs_collection.find_one(
             {"$and": [{"event_id": event_id}, {"key": key}]}
@@ -46,7 +50,9 @@ class ConfigAdapter:
         return await cls.database.configs_collection.find_one({"id": c_id})
 
     @classmethod
-    async def update_config(cls, c_id: str, config: dict) -> str | None:  # pragma: no cover
+    async def update_config(
+        cls, c_id: str, config: dict
+    ) -> str | None:  # pragma: no cover
         """Update config function."""
         return await cls.database.configs_collection.replace_one({"id": c_id}, config)
 

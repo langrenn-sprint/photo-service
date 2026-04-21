@@ -14,7 +14,11 @@ def token() -> str:
     """Token."""
     secret = os.getenv("JWT_SECRET")
     algorithm = "HS256"
-    payload = {"username": os.getenv("ADMIN_USERNAME"), "role": "admin", "exp": 9999999999}
+    payload = {
+        "username": os.getenv("ADMIN_USERNAME"),
+        "role": "admin",
+        "exp": 9999999999,
+    }
     return jwt.encode(payload, secret, algorithm)
 
 

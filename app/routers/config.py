@@ -25,7 +25,9 @@ router = APIRouter()
 
 
 @router.get("/config")
-async def get_config(key: str, event_id: Annotated[str, Query(alias="eventId")]) -> Response:
+async def get_config(
+    key: str, event_id: Annotated[str, Query(alias="eventId")]
+) -> Response:
     """Get config by key route function."""
     try:
         config = await ConfigService.get_config_by_key(event_id, key)
@@ -93,7 +95,9 @@ async def delete_config(config_id: str) -> Response:
 
 
 @router.get("/configs")
-async def get_configs(event_id: Annotated[str | None, Query(alias="eventId")] = None) -> Response:
+async def get_configs(
+    event_id: Annotated[str | None, Query(alias="eventId")] = None,
+) -> Response:
     """Get all configs route function."""
     configs = await ConfigService.get_all_configs(event_id)
     _list = [c.model_dump() for c in configs]

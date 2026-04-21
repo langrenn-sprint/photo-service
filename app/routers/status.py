@@ -32,7 +32,9 @@ async def get_status(
 ) -> Response:
     """Get status route function."""
     if status_type is not None:
-        status_list = await StatusService.get_all_status_by_type(event_id, status_type, count)
+        status_list = await StatusService.get_all_status_by_type(
+            event_id, status_type, count
+        )
     else:
         status_list = await StatusService.get_all_status(event_id, count)
     _list = [s.model_dump() for s in status_list]

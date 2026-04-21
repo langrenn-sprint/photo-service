@@ -34,7 +34,9 @@ async def token(http_service: Any) -> str:
     async with httpx.AsyncClient() as client:
         response = await client.post(url, headers=headers, json=request_body)
     if response.status_code != 200:
-        logging.error(f"Got unexpected status {response.status_code} from {http_service}.")
+        logging.error(
+            f"Got unexpected status {response.status_code} from {http_service}."
+        )
     return response.json()["token"]
 
 

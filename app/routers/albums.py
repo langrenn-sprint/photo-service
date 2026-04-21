@@ -25,7 +25,9 @@ router = APIRouter()
 
 
 @router.get("/albums")
-async def get_albums(g_id: Annotated[str | None, Query(alias="gId")] = None) -> Response:
+async def get_albums(
+    g_id: Annotated[str | None, Query(alias="gId")] = None,
+) -> Response:
     """Get albums route function."""
     if g_id is not None:
         album = await AlbumsService.get_album_by_g_id(g_id)

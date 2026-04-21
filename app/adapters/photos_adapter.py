@@ -24,7 +24,9 @@ class PhotosAdapter:
     @classmethod
     async def get_all_photos(cls, event_id: str) -> list:  # pragma: no cover
         """Get all photos function."""
-        cursor = cls.database.photos_collection.find({"event_id": event_id}).sort("time", -1)
+        cursor = cls.database.photos_collection.find({"event_id": event_id}).sort(
+            "time", -1
+        )
         return await cursor.to_list(None)
 
     @classmethod
@@ -45,11 +47,15 @@ class PhotosAdapter:
     @classmethod
     async def get_photos_by_race_id(cls, race_id: str) -> list:  # pragma: no cover
         """Get all photos by race_id function."""
-        cursor = cls.database.photos_collection.find({"race_id": race_id}).sort("time", -1)
+        cursor = cls.database.photos_collection.find({"race_id": race_id}).sort(
+            "time", -1
+        )
         return await cursor.to_list(None)
 
     @classmethod
-    async def get_photos_by_raceclass(cls, event_id: str, raceclass: str) -> list:  # pragma: no cover
+    async def get_photos_by_raceclass(
+        cls, event_id: str, raceclass: str
+    ) -> list:  # pragma: no cover
         """Get all photos by raceclass function."""
         cursor = cls.database.photos_collection.find(
             {"raceclass": raceclass, "event_id": event_id}
@@ -57,7 +63,9 @@ class PhotosAdapter:
         return await cursor.to_list(None)
 
     @classmethod
-    async def get_photos_starred_by_raceclass(cls, event_id: str, raceclass: str) -> list:  # pragma: no cover
+    async def get_photos_starred_by_raceclass(
+        cls, event_id: str, raceclass: str
+    ) -> list:  # pragma: no cover
         """Get all starred photos by raceclass function."""
         cursor = cls.database.photos_collection.find(
             {"starred": True, "raceclass": raceclass, "event_id": event_id}
@@ -73,7 +81,9 @@ class PhotosAdapter:
         return await cursor.to_list(None)
 
     @classmethod
-    async def update_photo(cls, c_id: str, photo: dict) -> str | None:  # pragma: no cover
+    async def update_photo(
+        cls, c_id: str, photo: dict
+    ) -> str | None:  # pragma: no cover
         """Update photo function."""
         return await cls.database.photos_collection.replace_one({"id": c_id}, photo)
 

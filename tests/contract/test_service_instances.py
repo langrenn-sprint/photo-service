@@ -35,7 +35,9 @@ async def token(http_service: Any) -> str:
     async with httpx.AsyncClient() as client:
         response = await client.post(url, headers=headers, json=request_body)
     if response.status_code != 200:
-        logging.error(f"Got unexpected status {response.status_code} from {http_service}.")
+        logging.error(
+            f"Got unexpected status {response.status_code} from {http_service}."
+        )
     return response.json()["token"]
 
 
@@ -101,7 +103,9 @@ async def test_create_service_instance(
 @pytest.mark.asyncio
 async def test_get_all_service_instances(http_service: Any, token: MockFixture) -> None:
     """Should return OK and a list of service instances as json."""
-    url = f"{http_service}/service-instances?eventId=1e95458c-e000-4d8b-beda-f860c77fd758"
+    url = (
+        f"{http_service}/service-instances?eventId=1e95458c-e000-4d8b-beda-f860c77fd758"
+    )
     async with httpx.AsyncClient() as client:
         response = await client.get(url)
 
@@ -118,7 +122,9 @@ async def test_get_service_instance_by_id(
     http_service: Any, token: MockFixture, service_instance: dict
 ) -> None:
     """Should return OK and a service instance as json."""
-    list_url = f"{http_service}/service-instances?eventId=1e95458c-e000-4d8b-beda-f860c77fd758"
+    list_url = (
+        f"{http_service}/service-instances?eventId=1e95458c-e000-4d8b-beda-f860c77fd758"
+    )
     async with httpx.AsyncClient() as client:
         response = await client.get(list_url)
         service_instances = response.json()
@@ -140,7 +146,9 @@ async def test_update_service_instance(
     http_service: Any, token: MockFixture, service_instance: dict
 ) -> None:
     """Should return No Content."""
-    list_url = f"{http_service}/service-instances?eventId=1e95458c-e000-4d8b-beda-f860c77fd758"
+    list_url = (
+        f"{http_service}/service-instances?eventId=1e95458c-e000-4d8b-beda-f860c77fd758"
+    )
     headers = {
         "content-type": "application/json",
         "authorization": f"Bearer {token}",
@@ -170,7 +178,9 @@ async def test_update_service_instance(
 @pytest.mark.asyncio
 async def test_delete_service_instance(http_service: Any, token: MockFixture) -> None:
     """Should return No Content."""
-    list_url = f"{http_service}/service-instances?eventId=1e95458c-e000-4d8b-beda-f860c77fd758"
+    list_url = (
+        f"{http_service}/service-instances?eventId=1e95458c-e000-4d8b-beda-f860c77fd758"
+    )
     headers = {"authorization": f"Bearer {token}"}
     async with httpx.AsyncClient() as client:
         response = await client.get(list_url)

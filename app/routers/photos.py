@@ -51,9 +51,13 @@ async def get_photos(params: Annotated[PhotosQueryParams, Query()]) -> Response:
 
     if params.raceclass is not None:
         if params.starred:
-            photos = await PhotosService.get_photos_starred_by_raceclass(params.event_id, params.raceclass)
+            photos = await PhotosService.get_photos_starred_by_raceclass(
+                params.event_id, params.raceclass
+            )
         else:
-            photos = await PhotosService.get_photos_by_raceclass(params.event_id, params.raceclass)
+            photos = await PhotosService.get_photos_by_raceclass(
+                params.event_id, params.raceclass
+            )
     elif params.race_id is not None:
         photos = await PhotosService.get_photos_by_race_id(params.race_id)
     elif params.starred:
