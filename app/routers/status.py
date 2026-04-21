@@ -29,17 +29,11 @@ async def get_status(
     event_id: Annotated[str, Query(alias="eventId")],
     count: int = 25,
     status_type: Annotated[str | None, Query(alias="type")] = None,
-) -> Response:
+) -> list[Status]:
     """Get status route function."""
     if status_type is not None:
-        status_list = await StatusService.get_all_status_by_type(
-            event_id, status_type, count
-        )
-    else:
-        status_list = await StatusService.get_all_status(event_id, count)
-    _list = [s.model_dump() for s in status_list]
-    body = json.dumps(_list, default=str, ensure_ascii=False)
-    return Response(status_code=200, content=body, media_type="application/json")
+        return await StatusService.get_all_status_by_type(event_id, status_type, count)
+    return await StatusService.get_all_status(event_id, count)
 
 
 @router.post(
