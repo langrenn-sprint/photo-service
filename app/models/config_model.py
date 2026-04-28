@@ -8,5 +8,5 @@ class Config(BaseModel):
 
     event_id: str
     key: str
-    value: str
+    value: str | int | float | bool | list | dict
     id: str | None = None
