@@ -1,10 +1,10 @@
-"""Drop db and recreate indexes."""
+"""Database utility functions."""
 
 from typing import Any
 
 
 async def drop_db_and_recreate_indexes(mongo: Any, db_name: str) -> None:
-    """Drop db and recreate indexes."""
+    """Drop the database. Note: index recreation is not implemented."""
     await drop_db(mongo, db_name)
 
 
