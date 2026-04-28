@@ -143,8 +143,10 @@ async def token_exception_handler(
             status_code=403,
             content={"detail": "Not authorized to access this resource"},
         )
+    logger.error(f"Token processing failed due to server-side configuration or service error: {exc}")
     return JSONResponse(
-        status_code=403, content={"detail": "Not authorized to access this resource"}
+        status_code=503,
+        content={"detail": "Authentication service is unavailable or misconfigured"},
     )
 
 
