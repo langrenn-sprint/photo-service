@@ -1,4 +1,4 @@
-"""Contract test cases for ping."""
+"""Contract test cases for config."""
 
 import logging
 import os
@@ -6,13 +6,12 @@ from collections.abc import AsyncGenerator
 from http import HTTPStatus
 from typing import Any
 
-import jwt
+import httpx
 import motor.motor_asyncio
 import pytest
-from aiohttp import ClientSession, hdrs
 from pytest_mock import MockFixture
 
-from photo_service.utils import db_utils
+from app.utils import db_utils
 
 USERS_HOST_SERVER = os.getenv("USERS_HOST_SERVER")
 USERS_HOST_PORT = os.getenv("USERS_HOST_PORT")
@@ -27,18 +26,18 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 async def token(http_service: Any) -> str:
     """Create a valid token."""
     url = f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/login"
-    headers = {hdrs.CONTENT_TYPE: "application/json"}
+    headers = {"content-type": "application/json"}
     request_body = {
         "username": os.getenv("ADMIN_USERNAME"),
         "password": os.getenv("ADMIN_PASSWORD"),
     }
-    session = ClientSession()
-    async with session.post(url, headers=headers, json=request_body) as response:
-        body = await response.json()
-    await session.close()
-    if response.status != 200:
-        logging.error(f"Got unexpected status {response.status} from {http_service}.")
-    return body["token"]
+    async with httpx.AsyncClient() as client:
+        response = await client.post(url, headers=headers, json=request_body)
+    if response.status_code != 200:
+        logging.error(
+            f"Got unexpected status {response.status_code} from {http_service}."
+        )
+    return response.json()["token"]
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -74,24 +73,22 @@ async def config() -> dict:
 
 @pytest.mark.contract
 @pytest.mark.asyncio
-async def test_unit_test_create_config(
+async def test_create_config(
     http_service: Any,
     token: MockFixture,
-    clear_db: AsyncGenerator,
+    config: dict,
 ) -> None:
     """Should return Created, location header and no body."""
-    async with ClientSession() as session:
-        headers = {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        }
-        url = f"{http_service}/unit_test?domain=config&action=1"
-        request_body = ""
+    headers = {
+        "content-type": "application/json",
+        "authorization": f"Bearer {token}",
+    }
+    url = f"{http_service}/config"
+    async with httpx.AsyncClient() as client:
+        response = await client.post(url, headers=headers, json=config)
 
-        async with session.get(url, headers=headers, json=request_body) as response:
-            status = response.status
-
-        assert status == HTTPStatus.CREATED
+    assert response.status_code == HTTPStatus.CREATED
+    assert "/config/" in response.headers["location"]
 
 
 @pytest.mark.contract
@@ -99,15 +96,14 @@ async def test_unit_test_create_config(
 async def test_get_config_by_key(
     http_service: Any, token: MockFixture, config: dict
 ) -> None:
-    """Should return OK and an photo as json."""
+    """Should return OK and a config as json."""
     url = f"{http_service}/config?eventId=1e95458c-e000-4d8b-beda-f860c77fd758&key=photo_location"
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url)
 
-    async with ClientSession() as session:
-        async with session.get(url) as response:
-            ret_config = await response.json()
-
-    assert response.status == HTTPStatus.OK
-    assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
+    assert response.status_code == HTTPStatus.OK
+    assert "application/json" in response.headers["content-type"]
+    ret_config = response.json()
     assert type(ret_config) is dict
     assert ret_config["value"] == config["value"]
 
@@ -117,12 +113,10 @@ async def test_get_config_by_key(
 async def test_get_config_by_key_not_found(
     http_service: Any, token: MockFixture, config: dict
 ) -> None:
-    """Should return OK and an photo as json."""
+    """Should return 404 when key not found."""
     url = f"{http_service}/config?eventId=1e95458c-e000-4d8b-beda-f860c77fd758&key=invalid_key"
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url)
 
-    async with ClientSession() as session:
-        async with session.get(url) as response:
-            ret_config = await response.json()
-
-    assert response.status == HTTPStatus.NOT_FOUND
-    assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert "application/json" in response.headers["content-type"]

@@ -7,13 +7,12 @@ from copy import deepcopy
 from http import HTTPStatus
 from typing import Any
 
-import jwt
+import httpx
 import motor.motor_asyncio
 import pytest
-from aiohttp import ClientSession, hdrs
 from pytest_mock import MockFixture
 
-from photo_service.utils import db_utils
+from app.utils import db_utils
 
 USERS_HOST_SERVER = os.getenv("USERS_HOST_SERVER")
 USERS_HOST_PORT = os.getenv("USERS_HOST_PORT")
@@ -28,18 +27,18 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 async def token(http_service: Any) -> str:
     """Create a valid token."""
     url = f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/login"
-    headers = {hdrs.CONTENT_TYPE: "application/json"}
+    headers = {"content-type": "application/json"}
     request_body = {
         "username": os.getenv("ADMIN_USERNAME"),
         "password": os.getenv("ADMIN_PASSWORD"),
     }
-    session = ClientSession()
-    async with session.post(url, headers=headers, json=request_body) as response:
-        body = await response.json()
-    await session.close()
-    if response.status != 200:
-        logging.error(f"Got unexpected status {response.status} from {http_service}.")
-    return body["token"]
+    async with httpx.AsyncClient() as client:
+        response = await client.post(url, headers=headers, json=request_body)
+    if response.status_code != 200:
+        logging.error(
+            f"Got unexpected status {response.status_code} from {http_service}."
+        )
+    return response.json()["token"]
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -88,19 +87,16 @@ async def test_create_service_instance(
     service_instance: dict,
 ) -> None:
     """Should return Created, location header and no body."""
-    async with ClientSession() as session:
-        headers = {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        }
-        url = f"{http_service}/service-instances"
-        request_body = service_instance
+    headers = {
+        "content-type": "application/json",
+        "authorization": f"Bearer {token}",
+    }
+    url = f"{http_service}/service-instances"
+    async with httpx.AsyncClient() as client:
+        response = await client.post(url, headers=headers, json=service_instance)
 
-        async with session.post(url, headers=headers, json=request_body) as response:
-            status = response.status
-
-        assert status == HTTPStatus.CREATED
-        assert "/service-instances/" in response.headers[hdrs.LOCATION]
+    assert response.status_code == HTTPStatus.CREATED
+    assert "/service-instances/" in response.headers["location"]
 
 
 @pytest.mark.contract
@@ -110,14 +106,12 @@ async def test_get_all_service_instances(http_service: Any, token: MockFixture) 
     url = (
         f"{http_service}/service-instances?eventId=1e95458c-e000-4d8b-beda-f860c77fd758"
     )
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url)
 
-    session = ClientSession()
-    async with session.get(url) as response:
-        service_instances = await response.json()
-    await session.close()
-
-    assert response.status == HTTPStatus.OK
-    assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
+    assert response.status_code == HTTPStatus.OK
+    assert "application/json" in response.headers["content-type"]
+    service_instances = response.json()
     assert type(service_instances) is list
     assert len(service_instances) > 0
 
@@ -128,21 +122,18 @@ async def test_get_service_instance_by_id(
     http_service: Any, token: MockFixture, service_instance: dict
 ) -> None:
     """Should return OK and a service instance as json."""
-    url = (
+    list_url = (
         f"{http_service}/service-instances?eventId=1e95458c-e000-4d8b-beda-f860c77fd758"
     )
-
-    async with ClientSession() as session:
-        async with session.get(url) as response:
-            service_instances = await response.json()
+    async with httpx.AsyncClient() as client:
+        response = await client.get(list_url)
+        service_instances = response.json()
         si_id = service_instances[0]["id"]
-        url = f"{http_service}/service-instances/{si_id}"
-        async with session.get(url) as response:
-            body = await response.json()
+        response = await client.get(f"{http_service}/service-instances/{si_id}")
+    body = response.json()
 
-    assert response.status == HTTPStatus.OK
-    assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
-    assert type(service_instance) is dict
+    assert response.status_code == HTTPStatus.OK
+    assert "application/json" in response.headers["content-type"]
     assert body["id"] == si_id
     assert body["service_type"] == service_instance["service_type"]
     assert body["instance_name"] == service_instance["instance_name"]
@@ -155,60 +146,49 @@ async def test_update_service_instance(
     http_service: Any, token: MockFixture, service_instance: dict
 ) -> None:
     """Should return No Content."""
-    url = (
+    list_url = (
         f"{http_service}/service-instances?eventId=1e95458c-e000-4d8b-beda-f860c77fd758"
     )
     headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token}",
+        "content-type": "application/json",
+        "authorization": f"Bearer {token}",
     }
-
-    async with ClientSession() as session:
-        async with session.get(url) as response:
-            service_instances = await response.json()
+    async with httpx.AsyncClient() as client:
+        response = await client.get(list_url)
+        service_instances = response.json()
         si_id = service_instances[0]["id"]
-        url = f"{http_service}/service-instances/{si_id}"
+        si_url = f"{http_service}/service-instances/{si_id}"
 
         request_body = deepcopy(service_instance)
-        new_status = "error"
         request_body["id"] = si_id
-        request_body["status"] = new_status
+        request_body["status"] = "error"
 
-        async with session.put(url, headers=headers, json=request_body) as response:
-            assert response.status == HTTPStatus.NO_CONTENT
+        response = await client.put(si_url, headers=headers, json=request_body)
+        assert response.status_code == HTTPStatus.NO_CONTENT
 
-        async with session.get(url) as response:
-            assert response.status == HTTPStatus.OK
-            updated_service_instance = await response.json()
-            assert updated_service_instance["status"] == new_status
-            assert (
-                updated_service_instance["service_type"]
-                == service_instance["service_type"]
-            )
-            assert (
-                updated_service_instance["instance_name"]
-                == service_instance["instance_name"]
-            )
+        response = await client.get(si_url)
+        assert response.status_code == HTTPStatus.OK
+        updated = response.json()
+        assert updated["status"] == "error"
+        assert updated["service_type"] == service_instance["service_type"]
+        assert updated["instance_name"] == service_instance["instance_name"]
 
 
 @pytest.mark.contract
 @pytest.mark.asyncio
 async def test_delete_service_instance(http_service: Any, token: MockFixture) -> None:
     """Should return No Content."""
-    url = (
+    list_url = (
         f"{http_service}/service-instances?eventId=1e95458c-e000-4d8b-beda-f860c77fd758"
     )
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
-
-    async with ClientSession() as session:
-        async with session.get(url) as response:
-            service_instances = await response.json()
+    headers = {"authorization": f"Bearer {token}"}
+    async with httpx.AsyncClient() as client:
+        response = await client.get(list_url)
+        service_instances = response.json()
         si_id = service_instances[0]["id"]
-        url = f"{http_service}/service-instances/{si_id}"
-        async with session.delete(url, headers=headers) as response:
-            assert response.status == HTTPStatus.NO_CONTENT
+        si_url = f"{http_service}/service-instances/{si_id}"
+        response = await client.delete(si_url, headers=headers)
+        assert response.status_code == HTTPStatus.NO_CONTENT
 
-        async with session.get(url) as response:
-            assert response.status == HTTPStatus.NOT_FOUND
+        response = await client.get(si_url)
+        assert response.status_code == HTTPStatus.NOT_FOUND

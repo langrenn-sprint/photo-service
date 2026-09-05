@@ -4,5 +4,5 @@ import pytest
 
 
 @pytest.mark.unit
-async def test_service_instance_service() -> None:
+def test_service_instance_service() -> None:
     """Should pass."""

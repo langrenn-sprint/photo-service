@@ -1,38 +1,36 @@
 """Conftest module."""
 
-from http import HTTPStatus
 import os
 import time
+from http import HTTPStatus
+from os import environ as env
 from typing import Any
 
 import pytest
 import requests
-from aiohttp.test_utils import TestClient as _TestClient
-from dotenv import load_dotenv
-from requests.exceptions import ConnectionError as _ConnectionError
+from fastapi.testclient import TestClient
+from requests.exceptions import ConnectionError  # noqa: A004
 
-from photo_service import create_app
+from app import api
 
-load_dotenv()
-HOST_PORT = int(os.getenv("HOST_PORT", "8080"))
+HOST_PORT = int(env.get("HOST_PORT", "8080"))
 
 
 @pytest.fixture
-async def client(aiohttp_client: Any) -> _TestClient:
+def client() -> TestClient:
     """Instantiate server and start it."""
-    app = await create_app()
-    return await aiohttp_client(app)
+    return TestClient(api)
 
 
 def is_responsive(url: Any) -> Any:
     """Return true if response from service is 200."""
     url = f"{url}/ready"
     try:
-        response = requests.get(url, timeout=60)
+        response = requests.get(url, timeout=30)
         if response.status_code == HTTPStatus.OK:
             time.sleep(2)  # sleep extra 2 sec
             return True
-    except _ConnectionError:
+    except ConnectionError:
         return False
 
 
