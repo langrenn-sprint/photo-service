@@ -13,7 +13,7 @@ from requests.exceptions import ConnectionError  # noqa: A004
 
 from app import api
 
-HOST_PORT = int(env.get("HOST_PORT", "8080"))
+HOST_PORT = int(env.get("HOST_PORT", "8000"))
 
 
 @pytest.fixture
