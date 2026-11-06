@@ -42,7 +42,7 @@ async def get_albums(
 @router.post(
     "/albums",
     status_code=201,
-    dependencies=[require_roles(UserRole.Admin, UserRole.AlbumAdmin)],
+    dependencies=[require_roles(UserRole.Admin)],
 )
 async def create_album(album: Album) -> Response:
     """Create album route function."""
@@ -78,7 +78,7 @@ async def get_album(album_id: str) -> Response:
 @router.put(
     "/albums/{album_id}",
     status_code=204,
-    dependencies=[require_roles(UserRole.Admin, UserRole.AlbumAdmin)],
+    dependencies=[require_roles(UserRole.Admin)],
 )
 async def update_album(album_id: str, album: Album) -> Response:
     """Update album route function."""
@@ -97,7 +97,7 @@ async def update_album(album_id: str, album: Album) -> Response:
 @router.delete(
     "/albums/{album_id}",
     status_code=204,
-    dependencies=[require_roles(UserRole.Admin, UserRole.AlbumAdmin)],
+    dependencies=[require_roles(UserRole.Admin)],
 )
 async def delete_album(album_id: str) -> Response:
     """Delete album route function."""

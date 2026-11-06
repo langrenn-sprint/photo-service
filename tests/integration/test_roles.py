@@ -16,7 +16,6 @@ from fastapi.testclient import TestClient
 
 from app import api
 from tests.role_model import (
-    PHOTO_SERVICE_ROLES,
     REMOVED_ROLES,
     ROLES,
     WRITE_ACCESS,
@@ -38,7 +37,7 @@ def _token(role: str) -> str:
 @pytest.mark.integration
 @pytest.mark.parametrize(
     ("method", "path", "role", "allowed"),
-    access_cases(ROLES + PHOTO_SERVICE_ROLES + REMOVED_ROLES),
+    access_cases(ROLES + REMOVED_ROLES),
 )
 async def test_write_access(
     client: TestClient, method: str, path: str, role: str, *, allowed: bool

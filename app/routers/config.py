@@ -40,7 +40,7 @@ async def get_config(
 @router.post(
     "/config",
     status_code=201,
-    dependencies=[require_roles(UserRole.Admin, UserRole.ConfigAdmin)],
+    dependencies=[require_roles(UserRole.Admin)],
 )
 async def create_config(config: Config) -> Response:
     """Create config route function."""
@@ -63,7 +63,7 @@ async def create_config(config: Config) -> Response:
 @router.put(
     "/config",
     status_code=204,
-    dependencies=[require_roles(UserRole.Admin, UserRole.ConfigAdmin)],
+    dependencies=[require_roles(UserRole.Admin)],
 )
 async def update_config(config: Config) -> Response:
     """Update config route function."""
@@ -82,7 +82,7 @@ async def update_config(config: Config) -> Response:
 @router.delete(
     "/config/{config_id}",
     status_code=204,
-    dependencies=[require_roles(UserRole.Admin, UserRole.ConfigAdmin)],
+    dependencies=[require_roles(UserRole.Admin)],
 )
 async def delete_config(config_id: str) -> Response:
     """Delete config route function."""
