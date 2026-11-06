@@ -5,10 +5,10 @@ import os
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
-import motor.motor_asyncio
 import pymongo.errors
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from pymongo import AsyncMongoClient
 
 from app.utils import db_utils
 
@@ -79,7 +79,7 @@ access_logger.addFilter(EndpointFilter(excluded_endpoints))
 async def lifespan(app: FastAPI) -> AsyncGenerator[None]:  # noqa: ARG001  # pragma: no cover
     """Initialize and close database-backed adapters for the app lifecycle."""
     logger.debug(f"Connecting to db at {DB_HOST}:{DB_PORT}")
-    mongo = motor.motor_asyncio.AsyncIOMotorClient(
+    mongo = AsyncMongoClient(
         host=DB_HOST,
         port=DB_PORT,
         username=DB_USER,
@@ -97,7 +97,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:  # noqa: ARG001  # pra
 
     yield
 
-    mongo.close()
+    await mongo.close()
 
 
 api = FastAPI(
