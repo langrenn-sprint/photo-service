@@ -9,7 +9,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
 
-from app.authorization import RoleChecker, UserRole
+from app.authorization import UserRole, require_roles
 from app.models import ServiceInstance
 from app.services import (
     IllegalValueError,
@@ -55,7 +55,7 @@ async def get_service_instances(
 @router.post(
     "/service-instances",
     status_code=201,
-    dependencies=[Depends(RoleChecker([UserRole.Admin, UserRole.PhotoAdmin]))],
+    dependencies=[require_roles(UserRole.Admin, UserRole.PhotoAdmin)],
 )
 async def create_service_instance(service_instance: ServiceInstance) -> Response:
     """Create service instance route function."""
@@ -99,7 +99,7 @@ async def get_service_instance(service_instance_id: str) -> Response:
 @router.put(
     "/service-instances/{service_instance_id}",
     status_code=204,
-    dependencies=[Depends(RoleChecker([UserRole.Admin, UserRole.PhotoAdmin]))],
+    dependencies=[require_roles(UserRole.Admin, UserRole.PhotoAdmin)],
 )
 async def update_service_instance(
     service_instance: ServiceInstance,
@@ -125,7 +125,7 @@ async def update_service_instance(
 @router.delete(
     "/service-instances/{service_instance_id}",
     status_code=204,
-    dependencies=[Depends(RoleChecker([UserRole.Admin, UserRole.PhotoAdmin]))],
+    dependencies=[require_roles(UserRole.Admin, UserRole.PhotoAdmin)],
 )
 async def delete_service_instance(service_instance_id: str) -> Response:
     """Delete service instance route function."""
