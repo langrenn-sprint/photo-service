@@ -9,7 +9,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
 
-from app.authorization import RoleChecker, UserRole
+from app.authorization import UserRole, require_roles
 from app.models import Config
 from app.services import (
     ConfigNotFoundError,
@@ -40,7 +40,7 @@ async def get_config(
 @router.post(
     "/config",
     status_code=201,
-    dependencies=[Depends(RoleChecker([UserRole.Admin, UserRole.ConfigAdmin]))],
+    dependencies=[require_roles(UserRole.Admin, UserRole.ConfigAdmin)],
 )
 async def create_config(config: Config) -> Response:
     """Create config route function."""
@@ -63,7 +63,7 @@ async def create_config(config: Config) -> Response:
 @router.put(
     "/config",
     status_code=204,
-    dependencies=[Depends(RoleChecker([UserRole.Admin, UserRole.ConfigAdmin]))],
+    dependencies=[require_roles(UserRole.Admin, UserRole.ConfigAdmin)],
 )
 async def update_config(config: Config) -> Response:
     """Update config route function."""
@@ -82,7 +82,7 @@ async def update_config(config: Config) -> Response:
 @router.delete(
     "/config/{config_id}",
     status_code=204,
-    dependencies=[Depends(RoleChecker([UserRole.Admin, UserRole.ConfigAdmin]))],
+    dependencies=[require_roles(UserRole.Admin, UserRole.ConfigAdmin)],
 )
 async def delete_config(config_id: str) -> Response:
     """Delete config route function."""

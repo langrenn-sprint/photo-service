@@ -9,7 +9,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
 
-from app.authorization import RoleChecker, UserRole
+from app.authorization import UserRole, require_roles
 from app.models import Status
 from app.services import (
     IllegalValueError,
@@ -39,7 +39,7 @@ async def get_status(
 @router.post(
     "/status",
     status_code=201,
-    dependencies=[Depends(RoleChecker([UserRole.Admin, UserRole.StatusAdmin]))],
+    dependencies=[require_roles(UserRole.Admin, UserRole.StatusAdmin)],
 )
 async def create_status(status: Status) -> Response:
     """Create status route function."""
@@ -62,7 +62,7 @@ async def create_status(status: Status) -> Response:
 @router.delete(
     "/status/{status_id}",
     status_code=204,
-    dependencies=[Depends(RoleChecker([UserRole.Admin, UserRole.StatusAdmin]))],
+    dependencies=[require_roles(UserRole.Admin, UserRole.StatusAdmin)],
 )
 async def delete_status(status_id: str) -> Response:
     """Delete status route function."""

@@ -24,6 +24,7 @@ from .authorization import (
     TokenError,
     TokenMissingError,
     TokenValidationError,
+    document_roles,
 )
 from .routers import (
     albums,
@@ -139,3 +140,4 @@ api.include_router(config.router)
 api.include_router(service_instances.router)
 api.include_router(status.router)
 api.include_router(g_photos.router)
+document_roles(api)

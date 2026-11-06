@@ -9,7 +9,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
 
-from app.authorization import RoleChecker, UserRole
+from app.authorization import UserRole, require_roles
 from app.models import Album
 from app.services import (
     AlbumNotFoundError,
@@ -42,7 +42,7 @@ async def get_albums(
 @router.post(
     "/albums",
     status_code=201,
-    dependencies=[Depends(RoleChecker([UserRole.Admin, UserRole.AlbumAdmin]))],
+    dependencies=[require_roles(UserRole.Admin, UserRole.AlbumAdmin)],
 )
 async def create_album(album: Album) -> Response:
     """Create album route function."""
@@ -78,7 +78,7 @@ async def get_album(album_id: str) -> Response:
 @router.put(
     "/albums/{album_id}",
     status_code=204,
-    dependencies=[Depends(RoleChecker([UserRole.Admin, UserRole.AlbumAdmin]))],
+    dependencies=[require_roles(UserRole.Admin, UserRole.AlbumAdmin)],
 )
 async def update_album(album_id: str, album: Album) -> Response:
     """Update album route function."""
@@ -97,7 +97,7 @@ async def update_album(album_id: str, album: Album) -> Response:
 @router.delete(
     "/albums/{album_id}",
     status_code=204,
-    dependencies=[Depends(RoleChecker([UserRole.Admin, UserRole.AlbumAdmin]))],
+    dependencies=[require_roles(UserRole.Admin, UserRole.AlbumAdmin)],
 )
 async def delete_album(album_id: str) -> Response:
     """Delete album route function."""
