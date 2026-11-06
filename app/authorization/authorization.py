@@ -136,10 +136,7 @@ class UserRole(StrEnum):
     """Enum of user roles."""
 
     Admin = "admin"
-    PhotoAdmin = "photo-admin"
-    AlbumAdmin = "album-admin"
-    ConfigAdmin = "config-admin"
-    StatusAdmin = "status-admin"
+    ResultAdmin = "result-admin"
 
 
 class RoleChecker:

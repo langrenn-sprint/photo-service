@@ -2,9 +2,8 @@
 
 Users with each role are created in user-service and log in, so the tests use
 real tokens with the role names user-service hands out. The tests check the
-whole role model against the running service, and that only admin may change
-a real album. The photo-service roles (photo-admin etc.) cannot be created in
-user-service, so they are only tested in the integration tests.
+whole role model against the running service, and with real data that
+result-admin may edit photos (raceday), while only admin may change an album.
 """
 
 import os
@@ -21,6 +20,7 @@ from httpx import AsyncClient, Response
 from app.utils import db_utils
 from tests.role_model import (
     ADMIN,
+    RESULT_ADMIN,
     ROLES,
     access_cases,
 )
@@ -176,3 +176,60 @@ async def test_only_admin_changes_an_album(
         assert _check(await client.get(url), HTTPStatus.OK, "get").json() == album
         response = await client.delete(url, headers=_auth(tokens[ADMIN]))
         _check(response, HTTPStatus.NO_CONTENT, "delete as admin")
+
+
+@pytest.mark.contract
+@pytest.mark.asyncio(scope="module")
+async def test_result_admin_edits_photos(
+    http_service: str, tokens: dict[str, str]
+) -> None:
+    """result-admin may create, update and delete photos; the others get 403."""
+    photo = {
+        "name": "IMG_ROLLETEST.JPG",
+        "is_photo_finish": True,
+        "is_start_registration": False,
+        "confidence": 0,
+        "event_id": "1e95458c-e000-4d8b-beda-f860c77fd758",
+        "creation_time": "2026-11-06T12:01:02",
+        "information": {"description": "Rolletest"},
+        "race_id": "1e95458c-e000-4d8b-beda-f860c77fd758",
+        "raceclass": "G11",
+        "biblist": [2, 4],
+        "clublist": ["Kjelsås", "Lyn"],
+        "g_id": "rolletest-photo",
+        "g_product_url": "https://photos.google.com/rolletest",
+        "g_base_url": "https://lh3.googleusercontent.com/rolletest",
+        "ai_information": {"persons": "2", "numbers": [2, 4], "texts": []},
+    }
+    other_roles = [role for role in ROLES if role not in (ADMIN, RESULT_ADMIN)]
+    token = tokens[RESULT_ADMIN]
+    async with AsyncClient() as client:
+        for role in other_roles:
+            response = await client.post(
+                f"{http_service}/photos", headers=_auth(tokens[role]), json=photo
+            )
+            _check(response, HTTPStatus.FORBIDDEN, f"create photo as {role}")
+
+        response = await client.post(
+            f"{http_service}/photos", headers=_auth(token), json=photo
+        )
+        url = _url(http_service, _check(response, HTTPStatus.CREATED, "create"))
+        photo = _check(await client.get(url), HTTPStatus.OK, "get").json()
+
+        for role in other_roles:
+            changed = {**photo, "biblist": [9]}
+            response = await client.put(url, headers=_auth(tokens[role]), json=changed)
+            _check(response, HTTPStatus.FORBIDDEN, f"update photo as {role}")
+            response = await client.delete(url, headers=_auth(tokens[role]))
+            _check(response, HTTPStatus.FORBIDDEN, f"delete photo as {role}")
+
+        # On raceday, result-admin corrects the bibs on a photo:
+        response = await client.put(
+            url, headers=_auth(token), json={**photo, "biblist": [4]}
+        )
+        _check(response, HTTPStatus.NO_CONTENT, "update photo as result-admin")
+        updated = _check(await client.get(url), HTTPStatus.OK, "get").json()
+        assert updated["biblist"] == [4]
+
+        response = await client.delete(url, headers=_auth(token))
+        _check(response, HTTPStatus.NO_CONTENT, "delete photo as result-admin")

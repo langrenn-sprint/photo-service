@@ -1,8 +1,8 @@
 """The role model for photo-service, shared by the integration and contract tests.
 
 See langrenn-sprint/event-service-gui#215. All GET operations are open. Every
-write operation is listed here with the roles that may call it: admin, and the
-photo-service role for that resource.
+write operation is listed here with the roles that may call it: admin, and
+result-admin for photos.
 """
 
 ADMIN = "admin"
@@ -12,37 +12,38 @@ CONTESTANT_ADMIN = "contestant-admin"
 # The roles user-service creates users with:
 ROLES = [ADMIN, EVENT_ADMIN, RESULT_ADMIN, CONTESTANT_ADMIN]
 
-# Roles only photo-service knows. user-service cannot create users with them,
-# so they are only used by the integration tests:
-PHOTO_ADMIN = "photo-admin"
-ALBUM_ADMIN = "album-admin"
-CONFIG_ADMIN = "config-admin"
-STATUS_ADMIN = "status-admin"
-PHOTO_SERVICE_ROLES = [PHOTO_ADMIN, ALBUM_ADMIN, CONFIG_ADMIN, STATUS_ADMIN]
+# Roles that no longer exist, and must not give access. photo-service had its
+# own roles (photo-admin etc.), but user-service could not create users with them:
+REMOVED_ROLES = [
+    "user-admin",
+    "race-result",
+    "race-office",
+    "user",
+    "photo-admin",
+    "album-admin",
+    "config-admin",
+    "status-admin",
+]
 
-# Roles that no longer exist, and must not give access:
-REMOVED_ROLES = ["user-admin", "race-result", "race-office", "user"]
-
-PHOTOS = {ADMIN, PHOTO_ADMIN}
-ALBUMS = {ADMIN, ALBUM_ADMIN}
-CONFIG = {ADMIN, CONFIG_ADMIN}
-STATUS = {ADMIN, STATUS_ADMIN}
+# result-admin may edit photos on raceday; everything else is admin-only:
+PHOTOS = {ADMIN, RESULT_ADMIN}
+ADMIN_ONLY = {ADMIN}
 
 WRITE_ACCESS: dict[tuple[str, str], set[str]] = {
     ("POST", "/photos"): PHOTOS,
     ("PUT", "/photos/{photo_id}"): PHOTOS,
     ("DELETE", "/photos/{photo_id}"): PHOTOS,
-    ("POST", "/service-instances"): PHOTOS,
-    ("PUT", "/service-instances/{service_instance_id}"): PHOTOS,
-    ("DELETE", "/service-instances/{service_instance_id}"): PHOTOS,
-    ("POST", "/albums"): ALBUMS,
-    ("PUT", "/albums/{album_id}"): ALBUMS,
-    ("DELETE", "/albums/{album_id}"): ALBUMS,
-    ("POST", "/config"): CONFIG,
-    ("PUT", "/config"): CONFIG,
-    ("DELETE", "/config/{config_id}"): CONFIG,
-    ("POST", "/status"): STATUS,
-    ("DELETE", "/status/{status_id}"): STATUS,
+    ("POST", "/service-instances"): ADMIN_ONLY,
+    ("PUT", "/service-instances/{service_instance_id}"): ADMIN_ONLY,
+    ("DELETE", "/service-instances/{service_instance_id}"): ADMIN_ONLY,
+    ("POST", "/albums"): ADMIN_ONLY,
+    ("PUT", "/albums/{album_id}"): ADMIN_ONLY,
+    ("DELETE", "/albums/{album_id}"): ADMIN_ONLY,
+    ("POST", "/config"): ADMIN_ONLY,
+    ("PUT", "/config"): ADMIN_ONLY,
+    ("DELETE", "/config/{config_id}"): ADMIN_ONLY,
+    ("POST", "/status"): ADMIN_ONLY,
+    ("DELETE", "/status/{status_id}"): ADMIN_ONLY,
 }
 
 

@@ -39,7 +39,7 @@ async def get_status(
 @router.post(
     "/status",
     status_code=201,
-    dependencies=[require_roles(UserRole.Admin, UserRole.StatusAdmin)],
+    dependencies=[require_roles(UserRole.Admin)],
 )
 async def create_status(status: Status) -> Response:
     """Create status route function."""
@@ -62,7 +62,7 @@ async def create_status(status: Status) -> Response:
 @router.delete(
     "/status/{status_id}",
     status_code=204,
-    dependencies=[require_roles(UserRole.Admin, UserRole.StatusAdmin)],
+    dependencies=[require_roles(UserRole.Admin)],
 )
 async def delete_status(status_id: str) -> Response:
     """Delete status route function."""

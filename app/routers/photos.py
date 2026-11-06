@@ -95,7 +95,7 @@ async def get_photos(params: Annotated[PhotosQueryParams, Query()]) -> Response:
 @router.post(
     "/photos",
     status_code=201,
-    dependencies=[require_roles(UserRole.Admin, UserRole.PhotoAdmin)],
+    dependencies=[require_roles(UserRole.Admin, UserRole.ResultAdmin)],
 )
 async def create_photo(photo: Photo) -> Response:
     """Create photo route function."""
@@ -131,7 +131,7 @@ async def get_photo(photo_id: str) -> Response:
 @router.put(
     "/photos/{photo_id}",
     status_code=204,
-    dependencies=[require_roles(UserRole.Admin, UserRole.PhotoAdmin)],
+    dependencies=[require_roles(UserRole.Admin, UserRole.ResultAdmin)],
 )
 async def update_photo(photo_id: str, photo: Photo) -> Response:
     """Update photo route function."""
@@ -150,7 +150,7 @@ async def update_photo(photo_id: str, photo: Photo) -> Response:
 @router.delete(
     "/photos/{photo_id}",
     status_code=204,
-    dependencies=[require_roles(UserRole.Admin, UserRole.PhotoAdmin)],
+    dependencies=[require_roles(UserRole.Admin, UserRole.ResultAdmin)],
 )
 async def delete_photo(photo_id: str) -> Response:
     """Delete photo route function."""
