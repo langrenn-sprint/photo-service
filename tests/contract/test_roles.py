@@ -13,7 +13,7 @@ from http import HTTPStatus
 from typing import Any
 from urllib.parse import urlparse
 
-import motor.motor_asyncio
+from pymongo import AsyncMongoClient
 import pytest
 from httpx import AsyncClient, Response
 
@@ -58,12 +58,11 @@ async def _login(
 @pytest.fixture(scope="module", autouse=True)
 async def clear_db(db_address: dict[str, Any]) -> AsyncGenerator:
     """Clear db before and after tests."""
-    mongo = motor.motor_asyncio.AsyncIOMotorClient(
-        **db_address, username=DB_USER, password=DB_PASSWORD
-    )
+    mongo = AsyncMongoClient(**db_address, username=DB_USER, password=DB_PASSWORD)
     await db_utils.drop_db_and_recreate_indexes(mongo, DB_NAME)
     yield
     await db_utils.drop_db(mongo, DB_NAME)
+    await mongo.close()
 
 
 @pytest.fixture(scope="module")
