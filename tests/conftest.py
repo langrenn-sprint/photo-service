@@ -16,6 +16,8 @@ from requests.exceptions import ConnectionError  # noqa: A004
 from app import api
 
 HOST_PORT = int(env.get("HOST_PORT", "8000"))
+SERVICE_CONTAINER_PORT = 8000  # port the services listen on in the containers
+MONGODB_CONTAINER_PORT = 27017
 LOG_FILE = "docker-compose-logs.txt"
 
 
@@ -35,6 +37,24 @@ def is_responsive(url: Any) -> Any:
             return True
     except ConnectionError:
         return False
+
+
+@pytest.fixture(scope="session")
+def users_url(docker_ip: Any, docker_services: Any) -> str:
+    """Base URL of user-service, on the free host port Docker picked."""
+    port = docker_services.port_for("user-service", SERVICE_CONTAINER_PORT)
+    return f"http://{docker_ip}:{port}"
+
+
+@pytest.fixture(scope="session")
+def db_address(docker_ip: Any, docker_services: Any) -> dict[str, Any]:
+    """Host and port of MongoDB, for connecting from the tests.
+
+    docker-compose.yml publishes only the container port, so Docker picks a
+    free host port and the tests do not collide with other stacks.
+    """
+    port = docker_services.port_for("mongodb", MONGODB_CONTAINER_PORT)
+    return {"host": docker_ip, "port": port}
 
 
 @pytest.fixture(scope="session")
